@@ -27,6 +27,7 @@ import {
   locate,
   itemAt,
   nextStoryId,
+  blankStoryMap,
   ITEM_KIND,
   ID_PREFIX,
 } from "./storyMap.js";
@@ -140,6 +141,16 @@ describe("parseStoryMap / serialize", () => {
     const doc = small();
     setMapTitle(doc, "x".repeat(200));
     expect(serialize(doc)).toContain(`title: "${"x".repeat(200)}"\n`);
+  });
+});
+
+describe("blankStoryMap", () => {
+  it("is a valid, empty story map that can be filled in", () => {
+    const doc = parseStoryMap(blankStoryMap());
+    expect(js(doc)).toEqual({ title: "New story map", releases: [], activities: [] });
+    expect(checkReferences(js(doc))).toEqual([]);
+    addRelease(doc, { id: "MVP", title: "First", goal: "Ship" });
+    expect(serialize(doc)).toContain("releases:\n  - id: MVP\n"); // one item per line
   });
 });
 

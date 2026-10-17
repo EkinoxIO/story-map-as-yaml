@@ -4,9 +4,12 @@ import { fakeFileHandle } from "../test/fakeFileHandle.js";
 import {
   STORY_MAP_ACCEPT,
   canOpenFilesInPlace,
+  canSaveAsNewFile,
   fileHandleSource,
   fileCopySource,
+  memorySource,
   openFileHandle,
+  saveAsNewFile,
   sourceFor,
   WriteConflictError,
 } from "./sources.js";
@@ -14,6 +17,7 @@ import {
 // Browser APIs stubbed by a test are removed after it, even when it fails.
 afterEach(() => {
   delete window.showOpenFilePicker;
+  delete window.showSaveFilePicker;
 });
 
 describe("fileHandleSource", () => {
@@ -58,11 +62,21 @@ describe("sourceFor", () => {
   });
 });
 
+describe("memorySource", () => {
+  it("reads its text, is not writable and says it is not saved yet", async () => {
+    const source = memorySource("sample.yml", "title: x\n");
+    expect(source).toMatchObject({ name: "sample.yml", writable: false, inMemory: true });
+    expect(await source.read()).toEqual({ text: "title: x\n", version: 0 });
+    await expect(source.write("y", 0)).rejects.toThrow(/not saved to a file yet/);
+  });
+});
+
 describe("browser capabilities", () => {
   it("follow the File System Access API being there", () => {
-    expect(canOpenFilesInPlace()).toBe(false);
+    expect([canOpenFilesInPlace(), canSaveAsNewFile()]).toEqual([false, false]);
     window.showOpenFilePicker = async () => [];
-    expect(canOpenFilesInPlace()).toBe(true);
+    window.showSaveFilePicker = async () => ({});
+    expect([canOpenFilesInPlace(), canSaveAsNewFile()]).toEqual([true, true]);
   });
 });
 
@@ -77,6 +91,16 @@ describe("file dialogs", () => {
     expect(await openFileHandle()).toBe(handle);
     window.showOpenFilePicker = cancelled;
     expect(await openFileHandle()).toBeNull();
+  });
+
+  it("save a new file and edit it there, or nothing when cancelled", async () => {
+    const { handle, disk } = fakeFileHandle("");
+    window.showSaveFilePicker = async () => handle;
+    const source = await saveAsNewFile("map.yml", "title: x\n");
+    expect(disk.text).toBe("title: x\n");
+    expect(source.writable).toBe(true);
+    window.showSaveFilePicker = cancelled;
+    expect(await saveAsNewFile("map.yml", "")).toBeNull();
   });
 
   it("accept the same extensions in the file input as in the dialogs", () => {

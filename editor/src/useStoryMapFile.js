@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { parseStoryMap, serialize, applyEdit, StoryMapError } from "./domain/storyMap.js";
+import { saveAsNewFile } from "./storage/sources.js";
 
 const DEFAULT_POLL_INTERVAL_MS = 1000;
 
@@ -15,8 +16,8 @@ function download(name, text) {
  * Loads the story map from `source` (see storage/sources.js), reloads it when it changes,
  * and saves edits back to it. Returns the YAML document, its plain object form, the
  * load/save/move errors to show, whether there are changes not saved to a file (`unsaved`),
- * and the edit, move and download actions. `pollIntervalMs` is how often a writable source
- * is checked for changes (tests pass a short one).
+ * and the edit, move, Save as… and download actions. `pollIntervalMs` is how often a writable
+ * source is checked for changes (tests pass a short one).
  */
 export default function useStoryMapFile(
   source,
@@ -37,7 +38,8 @@ export default function useStoryMapFile(
     setLoadError(null);
     setSaveError(null);
     setMoveError(null);
-    setUnsaved(false);
+    // A map that only lives in the page (sample, blank) is unsaved until saved or downloaded.
+    setUnsaved(Boolean(source?.inMemory));
     if (!source) return;
     let cancelled = false;
     shownVersion.current = null;
@@ -100,6 +102,17 @@ export default function useStoryMapFile(
     }
   }
 
+  // Saves the map to a new file the user chooses (Chrome, Edge). Resolves to a source for
+  // that file, to edit the map there, or to null when cancelled or failed (then saveError).
+  async function saveAs() {
+    try {
+      return await saveAsNewFile(source.name, serialize(doc));
+    } catch (e) {
+      setSaveError(`Not saved: ${e.message}`);
+      return null;
+    }
+  }
+
   function downloadCopy() {
     download(source.name, serialize(doc));
     setUnsaved(false);
@@ -114,6 +127,7 @@ export default function useStoryMapFile(
     unsaved,
     applyAndSave,
     move,
+    saveAs,
     downloadCopy,
   };
 }

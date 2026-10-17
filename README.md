@@ -24,9 +24,12 @@ Start it either way:
 - **From disk:** open `editor/dist/index.html` directly in your browser (no build, no server).
   The built file is committed for that reason.
 
-Either way, you pick a story map file on your computer: it is read and saved there, never
-uploaded. The published site is public (GitHub Team plan), but it only holds the editor and
-the public sample and schema, never anyone's story maps.
+The editor starts from a story map file on your computer, from the sample, or from a blank
+map; a map started from the sample or blank lives in the page until you save it (*Save as…*
+in Chrome and Edge, *Download YAML* elsewhere). Files are read and saved on your computer,
+never uploaded. The published site is public (GitHub Team plan), but it only holds the
+editor and the public sample and schema, never anyone's story maps. *Close* (top right) goes
+back to the start screen, asking first if changes are not saved.
 
 - **Chrome / Edge:** every add, edit and delete is saved straight into the YAML file,
   and the map refreshes when the file changes on disk. Comments, quoting and key order
@@ -86,9 +89,10 @@ Code layout in `editor/src/`:
   `story-map.schema.json`, item kinds), `document.js` (parse, serialize, edit),
   `lookups.js`, `operations.js` (add, change, delete), `moves.js`, `checks.js` and `text.js`
   (wording shared by messages). `nodes.js` holds the internal helpers for YAML nodes.
-- `storage/sources.js`: where the map is read from and saved to (file handle, or a read-only
-  copy), and the browser's open dialog.
-- `useStoryMapFile.js`: loading, watching and saving.
+- `storage/sources.js`: where the map is read from and saved to (file handle, read-only copy,
+  or a map that only lives in the page), and the browser's open and save dialogs.
+- `useStoryMapFile.js`: loading, watching and saving, including *Save as…* for a new map.
+- `startingPoints.js`: the bundled sample and the blank map offered by the start screen.
 - `editTargets.js`: what each click opens in the edit dialog, and which domain operation
   Save and Delete run.
 - `mapLayout.js`: the grid (columns, rows, which stories go in which cell);
@@ -96,8 +100,8 @@ Code layout in `editor/src/`:
 - `useMapInteractions.js`: the drag, drop and keyboard props of each part of the map.
 - `folding.js`, `useFolding.js` and `useDragAndDrop.js`: fold keys, fold state, and drag state
   with drop targets.
-- `components/`: the UI (file picker, map, edit dialog); `statusColors.js`: the card color
-  of each status.
+- `components/`: the UI (start screen, file bar, map, edit dialog); `statusColors.js`: the
+  card color of each status.
 
 ## Validating a story map
 

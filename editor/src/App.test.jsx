@@ -38,8 +38,9 @@ afterEach(() => {
   cleanup();
   disk.text = YAML;
   disk.lastModified = 1;
-  // Removed here, not at the end of a test, so a failed test does not leak it to the next.
+  // Removed here, not at the end of a test, so a failed test does not leak them to the next.
   delete window.showOpenFilePicker;
+  delete window.showSaveFilePicker;
 });
 
 async function openFile() {
@@ -49,7 +50,51 @@ async function openFile() {
   await screen.findByText("Pay by card");
 }
 
+describe("starting without a file", () => {
+  it("starts from the sample, not saved to a file yet", async () => {
+    render(<App pollIntervalMs={20} />);
+    fireEvent.click(screen.getByRole("button", { name: /Start from the sample/ }));
+    expect(await screen.findByText("Online Bookstore Story Map")).toBeTruthy();
+    expect(document.querySelectorAll(".story")).toHaveLength(27);
+    expect(screen.getByText(/not saved to a file yet/)).toBeTruthy();
+  });
+
+  it("starts blank", async () => {
+    render(<App pollIntervalMs={20} />);
+    fireEvent.click(screen.getByRole("button", { name: /Start blank/ }));
+    expect(await screen.findByText(/This story map is empty/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "New story map" })).toBeTruthy();
+  });
+
+  it("saves the map to a new file, then edits it there", async () => {
+    const newFile = fakeFileHandle("", { name: "my_map.yml" });
+    window.showSaveFilePicker = async () => newFile.handle;
+    render(<App pollIntervalMs={20} />);
+    fireEvent.click(screen.getByRole("button", { name: /Start blank/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Save as…" }));
+    expect(await screen.findByText(/saved to file, watching for changes/)).toBeTruthy();
+    expect(newFile.disk.text).toContain('title: "New story map"');
+    expect(screen.getByText(/my_map\.yml/)).toBeTruthy();
+  });
+
+  it("asks before closing a map that is not saved, then goes back to the start", async () => {
+    render(<App pollIntervalMs={20} />);
+    fireEvent.click(screen.getByRole("button", { name: /Start blank/ }));
+    // Close shows in the file bar, which appears once the map is loaded.
+    fireEvent.click(await screen.findByRole("button", { name: "Close" }));
+    expect(screen.getByRole("button", { name: "Discard unsaved changes?" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Discard unsaved changes?" }));
+    expect(screen.getByRole("button", { name: /Start from the sample/ })).toBeTruthy();
+  });
+});
+
 describe("App", () => {
+  it("closes a saved map at once, back to the start screen", async () => {
+    await openFile();
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByRole("button", { name: /Start blank/ })).toBeTruthy();
+  });
+
   it("shows the story map from the chosen file", async () => {
     await openFile();
     expect(screen.getByRole("button", { name: "Bookstore" })).toBeTruthy();
