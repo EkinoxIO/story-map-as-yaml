@@ -50,6 +50,9 @@ function StoryCard({ story, compact, onActivate, itemProps }) {
   );
 }
 
+// Headers and bands are dragged by their title; `data-drag-image` makes the browser show the
+// whole header or band, background included, while it is dragged (see useDragAndDrop).
+
 // A folded release keeps its title and id; its goal and stories are hidden.
 function ReleaseBand({ release, folded, onToggle, onEdit, rootProps, itemProps }) {
   const toggle = (
@@ -67,7 +70,7 @@ function ReleaseBand({ release, folded, onToggle, onEdit, rootProps, itemProps }
     );
   }
   return (
-    <div className="release" {...rootProps}>
+    <div className="release" data-drag-image {...rootProps}>
       {toggle}
       <Clickable
         className="title"
@@ -125,7 +128,7 @@ function Cell({ column, release, stories, onEdit, rootProps, storyProps }) {
 function ActivityHeader(props) {
   const { activity, activityIndex, span, folded, onToggle, onEdit, rootProps, itemProps } = props;
   return (
-    <div className="activity" style={{ gridColumn: `span ${span}` }} {...rootProps}>
+    <div className="activity" data-drag-image style={{ gridColumn: `span ${span}` }} {...rootProps}>
       <FoldToggle folded={folded} label={`activity ${activity.title}`} onToggle={onToggle} />
       <Clickable
         className="title"
@@ -161,7 +164,7 @@ function TaskHeader({ column, onToggle, onEdit, rootProps, itemProps }) {
     );
   }
   return (
-    <div className="task" {...rootProps}>
+    <div className="task" data-drag-image {...rootProps}>
       <FoldToggle folded={column.taskFolded} label={`task ${task.title}`} onToggle={onToggle} />
       <Clickable
         className="title"

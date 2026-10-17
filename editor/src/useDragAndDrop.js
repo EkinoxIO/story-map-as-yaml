@@ -1,9 +1,21 @@
 import { useState } from "react";
 
+// The browser builds its drag image from the dragged element only. When that element is a
+// title inside an element marked `data-drag-image` (a header, a band), the whole marked
+// element is shown instead, grabbed at the point where the pointer was. Browsers without
+// setDragImage keep their default image.
+function setWholeItemDragImage(e) {
+  const item = e.currentTarget.parentElement?.closest("[data-drag-image]");
+  if (!item || !e.dataTransfer.setDragImage) return;
+  const box = item.getBoundingClientRect();
+  e.dataTransfer.setDragImage(item, e.clientX - box.left, e.clientY - box.top);
+}
+
 // Drag and drop with the browser's native events. What is being dragged ({ kind, id }) is kept
 // in state; the browser's dataTransfer only carries the id as text, which some browsers need.
 //
-//   draggable(item)            props for an element that can be dragged
+//   draggable(item)            props for an element that can be dragged; inside an element
+//                              marked data-drag-image, that whole element is the drag image
 //   dropTarget(options)        props for an element that accepts drops:
 //     key                      identifies the target, to highlight it while hovered
 //     accepts(dragged)         whether this target takes the dragged item
@@ -28,6 +40,7 @@ export default function useDragAndDrop(onMove) {
         e.stopPropagation(); // a story card sits inside a cell: only the card is dragged
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", item.id);
+        setWholeItemDragImage(e);
         setDragged(item);
       },
       onDragEnd: reset,
