@@ -30,8 +30,8 @@ Start it either way:
 The editor starts from a story map file on your computer, from the sample, or from a blank
 map; a map started from the sample or blank lives in the page until you save it (*Save as…*
 in Chrome and Edge, *Download YAML* elsewhere). Files are read and saved on your computer,
-never uploaded. The published site is public (GitHub Team plan), but it only contains the
-editor. *Close* (top right) goes back to the start screen, asking first if changes are not
+never uploaded. The published site is public (GitHub Team plan), but it only holds the landing
+page, the editor and the public sample and schema, never anyone's story maps. *Close* (top right) goes back to the start screen, asking first if changes are not
 saved.
 
 - **Chrome / Edge:** every add, edit and delete is saved straight into the YAML file,
@@ -90,14 +90,17 @@ Code layout in `editor/src/`:
 - `domain/`: every rule of the format, without React, so it can be tested and reused.
   `storyMap.js` re-exports its parts: `vocabulary.js` (statuses read from
   `story-map.schema.json`, item kinds), `document.js` (parse, serialize, edit),
-  `lookups.js`, `operations.js` (add, change, delete), `moves.js` and `checks.js`.
-- `storage/sources.js`: where the map is read from and saved to (file handle, or a read-only copy).
+  `lookups.js`, `operations.js` (add, change, delete), `moves.js`, `checks.js` and `text.js`
+  (wording shared by messages). `nodes.js` holds the internal helpers for YAML nodes.
+- `storage/sources.js`: where the map is read from and saved to (file handle, read-only copy,
+  or a map that only lives in the page), and the browser's open and save dialogs.
 - `useStoryMapFile.js`: loading, watching and saving, including *Save as…* for a new map.
 - `startingPoints.js`: the bundled sample and the blank map offered by the start screen.
 - `editTargets.js`: what each click opens in the edit dialog, and which domain operation
   Save and Delete run.
 - `mapLayout.js`: the grid (columns, rows, which stories go in which cell);
   `mapMoves.js`: which move a drop or an Alt + arrow key runs.
+- `useMapInteractions.js`: the drag, drop and keyboard props of each part of the map.
 - `folding.js`, `useFolding.js` and `useDragAndDrop.js`: fold keys, fold state, and drag state
   with drop targets.
 - `components/`: the UI (start screen, file bar, map, edit dialog); `statusColors.js`: the
@@ -129,5 +132,5 @@ when the file starts with:
 Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
 `<type>(<optional scope>): <description>`, for example `feat(editor): add story drag and drop`
 or `fix(domain): keep comments when renaming a release`. Common types are `feat`, `fix`,
-`refactor`, `test`, `docs`, `build`, `ci` and `chore`; scopes used here are `editor`,
-`domain`, `schema`, `scripts` and `ci`.
+`refactor`, `test`, `docs`, `style`, `build`, `ci` and `chore`; scopes used here are
+`editor`, `domain`, `schema`, `scripts`, `site`, `ci` and `pages`.

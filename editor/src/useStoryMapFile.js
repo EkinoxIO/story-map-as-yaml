@@ -15,8 +15,9 @@ function download(name, text) {
 /**
  * Loads the story map from `source` (see storage/sources.js), reloads it when it changes,
  * and saves edits back to it. Returns the YAML document, its plain object form, the
- * load/save/move errors to show, and the edit, move and download actions. `pollIntervalMs` is how
- * often a writable source is checked for changes (tests pass a short one).
+ * load/save/move errors to show, whether there are changes not saved to a file (`unsaved`),
+ * and the edit, move, Save as… and download actions. `pollIntervalMs` is how often a writable
+ * source is checked for changes (tests pass a short one).
  */
 export default function useStoryMapFile(
   source,

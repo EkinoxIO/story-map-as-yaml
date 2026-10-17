@@ -5,7 +5,8 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 // Everything is inlined into dist/index.html so the editor opens straight from disk (file://).
 export default defineConfig({
   plugins: [react(), viteSingleFile()],
-  // The domain module imports ../story-map.schema.json from the repository root.
+  // Files imported from the repository root: the schema (domain module) and the sample
+  // (startingPoints.js).
   server: { fs: { allow: [".."] } },
   test: {
     environment: "node",

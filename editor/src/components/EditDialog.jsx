@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { StoryMapError } from "../domain/storyMap.js";
 
 // Modal form. onSave(values) and onDelete() may throw a StoryMapError: its message is shown
-// and the dialog stays open; any other outcome closes it. When deleteConfirmation is given,
+// and the dialog stays open. When they succeed, the dialog closes; any other error is not
+// caught here, so it is reported as a bug and the dialog stays open too. When deleteConfirmation is given,
 // the first click on Delete shows it and a second click deletes.
 export default function EditDialog({
   title,

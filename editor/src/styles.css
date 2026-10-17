@@ -73,7 +73,7 @@ button.danger {
   color: var(--danger);
   border-color: var(--danger);
 }
-/* Map elements are buttons so they can be clicked to edit, but look like plain blocks. */
+/* A button that looks like plain text: the map title in the header, clicked to edit it. */
 :where(button.block) {
   display: block;
   width: 100%;
