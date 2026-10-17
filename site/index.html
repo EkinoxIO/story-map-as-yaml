@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Story Map as YAML: a visual editor for YAML story maps</title>
+    <meta name="description" content="Edit user story maps visually while keeping them as plain YAML files that AI agents can read and update. Built for Spec-Driven Development, by Ekinox." />
+    <link rel="canonical" href="https://ekinoxio.github.io/story-map-as-yaml/" />
+    <meta name="author" content="Ekinox" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#2f4b7c" />
+    <!-- Link previews (Open Graph: LinkedIn, Slack, Teams, Facebook…; and X) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Story Map as YAML" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Story Map as YAML: a visual editor for YAML story maps" />
+    <meta property="og:description" content="Edit user story maps visually while keeping them as plain YAML files that AI agents can read and update. Built for Spec-Driven Development, by Ekinox." />
+    <meta property="og:url" content="https://ekinoxio.github.io/story-map-as-yaml/" />
+    <meta property="og:image" content="https://ekinoxio.github.io/story-map-as-yaml/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Story Map as YAML: a story map of activities, tasks and stories, by Ekinox." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Story Map as YAML: a visual editor for YAML story maps" />
+    <meta name="twitter:description" content="Edit user story maps visually while keeping them as plain YAML files that AI agents can read and update. Built for Spec-Driven Development, by Ekinox." />
+    <meta name="twitter:image" content="https://ekinoxio.github.io/story-map-as-yaml/social-card.png" />
+    <meta name="twitter:image:alt" content="Story Map as YAML: a story map of activities, tasks and stories, by Ekinox." />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Story Map as YAML",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any (web browser)",
+        "url": "https://ekinoxio.github.io/story-map-as-yaml/editor/",
+        "description": "Edit user story maps visually while keeping them as plain YAML files that AI agents can read and update. Built for Spec-Driven Development, by Ekinox.",
+        "image": "https://ekinoxio.github.io/story-map-as-yaml/social-card.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Ekinox",
+          "url": "https://ekinox.io",
+          "logo": "https://ekinoxio.github.io/story-map-as-yaml/ekinox-logo.png"
+        }
+      }
+    </script>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --surface: #ffffff;
+        --text: #1f2328;
+        --muted: #59636e;
+        --border: #d0d7de;
+        --accent: #2f4b7c;
+        --accent-text: #ffffff;
+        --ekinox: #695acd; /* Ekinox brand purple, from its logo */
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0d1117;
+          --surface: #161b22;
+          --text: #e6edf3;
+          --muted: #9198a1;
+          --border: #30363d;
+          --accent: #6e9be0;
+          --accent-text: #0d1117;
+          --ekinox: #a99ff0; /* lighter, to stay readable on the dark background */
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 17px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      header,
+      main,
+      footer {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
+      .product {
+        font-weight: 700;
+      }
+      .ekinox {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .ekinox img {
+        border-radius: 6px;
+      }
+      .ekinox strong {
+        color: var(--ekinox);
+        letter-spacing: 0.04em;
+      }
+      .ekinox:hover strong {
+        text-decoration: underline;
+      }
+      h1 {
+        font-size: clamp(32px, 6vw, 44px);
+        line-height: 1.15;
+        margin: 32px 0 16px;
+      }
+      .lead {
+        font-size: 20px;
+        color: var(--muted);
+        margin: 0 0 40px;
+      }
+      h2 {
+        font-size: 22px;
+        margin: 40px 0 8px;
+      }
+      ul {
+        padding-left: 22px;
+      }
+      li {
+        margin: 6px 0;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin: 48px 0;
+        text-align: center;
+      }
+      .open {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--accent-text);
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+      }
+      .open:hover {
+        filter: brightness(1.1);
+      }
+      .open:focus-visible,
+      a:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 16px 0 0;
+      }
+      a {
+        color: var(--accent);
+      }
+      footer a {
+        color: var(--ekinox);
+        font-weight: 600;
+      }
+      footer {
+        color: var(--muted);
+        font-size: 14px;
+        padding-bottom: 40px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="product">Story Map as YAML</span>
+      <a class="ekinox" href="https://ekinox.io" target="_blank" rel="noreferrer">
+        <img src="ekinox-logo.png" alt="" width="28" height="28" />
+        by <strong>EKINOX</strong>
+      </a>
+    </header>
+
+    <main>
+      <h1>Keep the story map next to the code</h1>
+      <p class="lead">
+        A visual story map editor whose source of truth is a plain YAML file: easy for AI
+        agents to read and change, easy for people to see and shape.
+      </p>
+
+      <h2>A second wave, and an old risk</h2>
+      <p>
+        Spec-Driven Development (SDD) is the second wave of AI tooling for building software.
+        It shifts work left: product owners take part and are empowered, and the whole flow
+        from idea to delivery improves, not only the developers' share of it.
+      </p>
+      <p>
+        The risk is to repeat old mistakes: long specification documents that nobody really
+        reads, or understands.
+      </p>
+
+      <h2>The story map</h2>
+      <p>
+        Agile workshops were invented to keep the conversation flowing about the direction to
+        take, the work to do and the steps to get there. The story map is one of them: the
+        user's journey laid out as activities and tasks, sliced into releases that each have a
+        goal.
+      </p>
+
+      <h2>Text for the agents, a picture for the people</h2>
+      <p>
+        Story Map as YAML keeps the story map as a YAML file, so an AI agent can read and update
+        it like any other file in the repository. On top of it, a visual editor keeps people
+        from getting lost in the text: they keep the clarity of the visual map while the text
+        stays the single source of truth.
+      </p>
+      <ul>
+        <li>Open your story map file, start from a sample, or start blank.</li>
+        <li>
+          Edit releases, activities, tasks and stories; fold them; reorder them by drag and drop
+          or from the keyboard.
+        </li>
+        <li>
+          In Chrome and Edge, every change is saved straight into your file, comments and
+          formatting included. Your files stay on your computer: nothing is uploaded.
+        </li>
+        <li>
+          The format is open: download its <a href="story-map.schema.json">JSON Schema</a> and
+          the <a href="sample_story_map.yml">sample story map</a>.
+        </li>
+      </ul>
+
+      <div class="card">
+        <a class="open" href="editor/">Open the editor</a>
+        <p class="note">Works in any modern browser; editing files in place needs Chrome or Edge.</p>
+      </div>
+    </main>
+
+    <footer>
+      Made by <a href="https://ekinox.io" target="_blank" rel="noreferrer">Ekinox</a>.
+    </footer>
+  </body>
+</html>

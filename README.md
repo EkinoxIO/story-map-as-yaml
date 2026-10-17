@@ -13,14 +13,16 @@ sliced horizontally into releases that each have a goal.
 | `sample_story_map.yml` | Example story map (an online bookstore) |
 | `scripts/validate.sh` | Validates story map files: schema, unique ids, known releases |
 | `editor/` | Browser editor (React + Vite), built into a single HTML file |
+| `site/` | GitHub Pages landing page, favicon, share image (`social-card.svg` → `.png`) and Ekinox logo |
 
 ## Editor
 
 Start it either way:
 
-- **Online:** open <https://ekinoxio.github.io/story-map-as-yaml/> (published from `main` by
-  `.github/workflows/pages.yml`). The sample and the schema can be downloaded there too:
-  `sample_story_map.yml`, `story-map.schema.json`.
+- **Online:** <https://ekinoxio.github.io/story-map-as-yaml/> presents the project
+  (`site/index.html`) and opens the editor at
+  <https://ekinoxio.github.io/story-map-as-yaml/editor/>. The sample and the schema can be
+  downloaded there too. Both are published from `main` by `.github/workflows/pages.yml`.
 - **From disk:** open `editor/dist/index.html` directly in your browser (no build, no server).
   The built file is committed for that reason.
 
