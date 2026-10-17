@@ -7,10 +7,11 @@ import {
 } from "../storage/sources.js";
 
 const WATCH_HINT =
-  "Edits are saved to the file, and the map refreshes whenever the file changes on disk.";
+  "Live with the file: your edits are saved straight into it, and changes made to it " +
+  "elsewhere, by an AI agent or another editor, show up here on their own.";
 const COPY_HINT =
   "This browser cannot write to the file: download your edits, and reopen the file " +
-  "to see outside changes. Use Chrome or Edge for live editing.";
+  "to see outside changes. Use Chrome or Edge to stay in sync with the file.";
 const NOT_A_FILE = "Drop or pick a single YAML file, not a folder.";
 
 // Calls onPick with a FileSystemFileHandle when the file can be watched, a File otherwise.
