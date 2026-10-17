@@ -51,6 +51,11 @@ Drag and drop to reorder, and the file is saved like any other edit:
 Comments attached to a moved item move with it, and dropping an item where it already is
 changes nothing.
 
+From the keyboard, focus an item (Tab) and press **Alt + arrow keys**: releases and stories
+move up and down (a story at the edge of its cell goes to the next release row), activities,
+tasks and stories move left and right (a task at the edge of its activity goes to the next
+activity). Drag and drop was built for Chrome and Edge, and is untested in Firefox and Safari.
+
 Development (Node 22+):
 
 ```bash
@@ -75,6 +80,10 @@ Code layout in `editor/src/`:
 - `useStoryMapFile.js`: loading, watching and saving.
 - `editTargets.js`: what each click opens in the edit dialog, and which domain operation
   Save and Delete run.
+- `mapLayout.js`: the grid (columns, rows, which stories go in which cell);
+  `mapMoves.js`: which move a drop or an Alt + arrow key runs.
+- `folding.js`, `useFolding.js` and `useDragAndDrop.js`: fold keys, fold state, and drag state
+  with drop targets.
 - `components/`: the UI; `statusColors.js`: the card color of each status.
 
 ## Validating a story map
