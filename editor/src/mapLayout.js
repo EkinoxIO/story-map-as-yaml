@@ -19,7 +19,7 @@ export const UNASSIGNED = Object.freeze({
  * - columns: one per task, or one for an activity without tasks; each knows its activity
  *   and task indices, its task, its fold key, and whether it or its activity is folded
  * - releases: the releases of the file (with their index, fold key and whether they are
- *   folded)
+ *   folded), the items moves are made between
  * - rows: the rows of the grid: the releases, plus UNASSIGNED when some stories need it
  * - storiesIn(column, row): the stories of that cell, in file order, with their indices
  */

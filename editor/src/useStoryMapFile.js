@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { parseStoryMap, serialize, applyEdit } from "./domain/storyMap.js";
+import { parseStoryMap, serialize, applyEdit, StoryMapError } from "./domain/storyMap.js";
 
 const DEFAULT_POLL_INTERVAL_MS = 1000;
 
@@ -14,8 +14,8 @@ function download(name, text) {
 /**
  * Loads the story map from `source` (see storage/sources.js), reloads it when it changes,
  * and saves edits back to it. Returns the YAML document, its plain object form, the
- * load and save errors to show, whether there are changes not saved to a file (`unsaved`),
- * and the edit and download actions. `pollIntervalMs` is how often a writable source
+ * load/save/move errors to show, whether there are changes not saved to a file (`unsaved`),
+ * and the edit, move and download actions. `pollIntervalMs` is how often a writable source
  * is checked for changes (tests pass a short one).
  */
 export default function useStoryMapFile(
@@ -25,6 +25,7 @@ export default function useStoryMapFile(
   const [doc, setDoc] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [saveError, setSaveError] = useState(null);
+  const [moveError, setMoveError] = useState(null); // about the map on screen: reset on reload
   const [unsaved, setUnsaved] = useState(false); // only for sources that cannot be written
   // Version of the text on screen; null forces the next poll to reload.
   const shownVersion = useRef(null);
@@ -35,6 +36,7 @@ export default function useStoryMapFile(
     setDoc(null);
     setLoadError(null);
     setSaveError(null);
+    setMoveError(null);
     setUnsaved(false);
     if (!source) return;
     let cancelled = false;
@@ -49,6 +51,7 @@ export default function useStoryMapFile(
         if (!cancelled) {
           setDoc(next);
           setLoadError(null);
+          setMoveError(null);
         }
       } catch (e) {
         // Keep showing the last valid map while the file is mid-edit.
@@ -79,10 +82,22 @@ export default function useStoryMapFile(
   // propagates synchronously to the caller (the edit dialog), before anything changes.
   function applyAndSave(mutate) {
     const next = applyEdit(doc, mutate);
-    if (next === doc) return; // nothing changed
+    if (next === doc) return; // nothing changed, e.g. an item dropped where it was
     setDoc(next);
     if (source.writable) saveQueue.current = saveQueue.current.then(() => write(next));
     else setUnsaved(true);
+  }
+
+  // Runs a move (drag and drop). One that breaks a rule, e.g. because the item
+  // vanished from the file meanwhile, is reported instead of applied.
+  function move(mutate) {
+    try {
+      applyAndSave(mutate);
+      setMoveError(null);
+    } catch (e) {
+      if (!(e instanceof StoryMapError)) throw e;
+      setMoveError(`Not moved: ${e.message}`);
+    }
   }
 
   function downloadCopy() {
@@ -95,8 +110,10 @@ export default function useStoryMapFile(
     storyMap: doc && doc.toJS(),
     loadError,
     saveError,
+    moveError,
     unsaved,
     applyAndSave,
+    move,
     downloadCopy,
   };
 }

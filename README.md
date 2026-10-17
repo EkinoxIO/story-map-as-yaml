@@ -36,6 +36,20 @@ Use the ▾ / ▸ toggles to fold:
 Folding only changes the view: nothing is written to the file, and folded items stay folded
 when the file reloads.
 
+Drag and drop to reorder, and the file is saved like any other edit:
+
+- releases: up or down;
+- activities: left or right;
+- tasks: within their activity or into another one (drop on a task, or on an activity's
+  title to put the task last);
+- stories: within their cell, or into another task and/or release (dropping into another
+  release row changes the story's release).
+
+Comments attached to a moved item move with it, and dropping an item where it already is
+changes nothing.
+
+Drag and drop was built for Chrome and Edge, and is untested in Firefox and Safari.
+
 Development (Node 22+):
 
 ```bash
@@ -62,8 +76,11 @@ Code layout in `editor/src/`:
 - `useStoryMapFile.js`: loading, watching and saving.
 - `editTargets.js`: what each click opens in the edit dialog, and which domain operation
   Save and Delete run.
-- `mapLayout.js`: the grid (columns, rows, which stories go in which cell).
-- `folding.js` and `useFolding.js`: fold keys and fold state.
+- `mapLayout.js`: the grid (columns, rows, which stories go in which cell);
+  `mapMoves.js`: which move a drop runs.
+- `useMapInteractions.js`: the drag and drop props of each part of the map.
+- `folding.js`, `useFolding.js` and `useDragAndDrop.js`: fold keys, fold state, and drag state
+  with drop targets.
 - `components/`: the UI (file picker, map, edit dialog); `statusColors.js`: the card color
   of each status.
 
