@@ -286,6 +286,30 @@ dialog .actions .spacer {
   padding-left: 20px;
 }
 
+/* Fold / unfold toggle on releases, activities and tasks. */
+button.fold {
+  flex: none;
+  width: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+/* Under a folded task: stories show only their id, with the status border. */
+.story.compact {
+  padding: 4px 8px;
+}
+/* Under a folded activity: one empty block per task, to show how many there are. */
+.task.placeholder {
+  padding: 8px;
+}
+.task.placeholder:hover {
+  outline: none;
+}
+
 /* Titles fill the rest of their header or band. */
 .activity .title,
 .task .title,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { UNASSIGNED, buildLayout } from "./mapLayout.js";
+import { UNASSIGNED, buildLayout, columnWidth } from "./mapLayout.js";
 
 const STORY_MAP = {
   releases: [
@@ -33,11 +33,11 @@ describe("buildLayout", () => {
     expect(columns[2]).toMatchObject({ activityIndex: 1, task: null });
   });
 
-  it("lists the activities with their index", () => {
-    const { activities } = buildLayout(STORY_MAP);
-    expect(activities.map((a) => [a.id, a.activityIndex])).toEqual([
-      ["act_1", 0],
-      ["act_2", 1],
+  it("lists the activities with their index and whether they are folded", () => {
+    const { activities } = buildLayout(STORY_MAP, (key) => key === "activity:act_2");
+    expect(activities.map((a) => [a.id, a.activityIndex, a.folded])).toEqual([
+      ["act_1", 0, false],
+      ["act_2", 1, true],
     ]);
   });
 
@@ -47,6 +47,12 @@ describe("buildLayout", () => {
       ["MVP", 0],
       ["v2", 1],
     ]);
+  });
+
+  it("folds a release without an id on its own", () => {
+    const noIds = { ...STORY_MAP, releases: [{ title: "First" }, { title: "Second" }] };
+    const { rows } = buildLayout(noIds, (key) => key === "release@1");
+    expect(rows.slice(0, 2).map((r) => r.folded)).toEqual([false, true]);
   });
 
   it("adds the Unassigned row only when a story needs it", () => {
@@ -63,5 +69,25 @@ describe("buildLayout", () => {
       ["US-3", 1],
     ]);
     expect(storiesIn(columns[1], rows[1]).map((s) => s.story.id)).toEqual(["US-2"]);
+  });
+
+  it("marks folded tasks and activities, a folded activity overriding its tasks", () => {
+    const folded = new Set(["task:task_1"]);
+    let layout = buildLayout(STORY_MAP, (key) => folded.has(key));
+    expect(layout.columns.map((c) => c.taskFolded)).toEqual([true, false, undefined]);
+    folded.add("activity:act_1");
+    layout = buildLayout(STORY_MAP, (key) => folded.has(key));
+    expect(layout.columns.slice(0, 2).map((c) => [c.activityFolded, c.taskFolded])).toEqual([
+      [true, false],
+      [true, false],
+    ]);
+  });
+});
+
+describe("columnWidth", () => {
+  it("narrows folded columns only", () => {
+    expect(columnWidth({ taskFolded: true })).toBe("max-content");
+    expect(columnWidth({ activityFolded: true })).toBe("max-content");
+    expect(columnWidth({})).toBe("var(--col-width)");
   });
 });
