@@ -25,6 +25,17 @@ for that reason.
   are kept: only the edited lines and `last_updated` change.
 - **Firefox / Safari:** the browser cannot write local files, so use *Download YAML* to save.
 
+Use the ▾ / ▸ toggles to fold:
+
+- a release: only its title and id stay; its goal and stories are hidden;
+- a task: its title stays in a narrow column, and its stories show only their id, so you
+  still see how many there are;
+- an activity: its title stays over one narrow empty block per task, so you still see how
+  many tasks it has; their titles and all their stories are hidden.
+
+Folding only changes the view: nothing is written to the file, and folded items stay folded
+when the file reloads.
+
 Development (Node 22+):
 
 ```bash
@@ -52,6 +63,7 @@ Code layout in `editor/src/`:
 - `editTargets.js`: what each click opens in the edit dialog, and which domain operation
   Save and Delete run.
 - `mapLayout.js`: the grid (columns, rows, which stories go in which cell).
+- `folding.js` and `useFolding.js`: fold keys and fold state.
 - `components/`: the UI (file picker, map, edit dialog); `statusColors.js`: the card color
   of each status.
 
