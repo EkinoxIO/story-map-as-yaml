@@ -1,8 +1,5 @@
 import { useState } from "react";
-
-// Chromium browsers can hand out a live, writable handle on a local file;
-// other browsers only give a one-time copy.
-const canWatchFiles = typeof window.showOpenFilePicker === "function";
+import { STORY_MAP_FILE_TYPES, canOpenFilesInPlace } from "../storage/sources.js";
 
 const WATCH_HINT =
   "Edits are saved to the file, and the map refreshes whenever the file changes on disk.";
@@ -16,6 +13,7 @@ const NOT_A_FILE = "Drop or pick a single YAML file, not a folder.";
 export default function FilePicker({ onPick }) {
   const [dragging, setDragging] = useState(false);
   const [problem, setProblem] = useState(null);
+  const canOpenInPlace = canOpenFilesInPlace();
 
   function pick(picked) {
     const isFileHandle = picked?.kind === "file" && typeof picked.getFile === "function";
@@ -30,7 +28,7 @@ export default function FilePicker({ onPick }) {
   async function pickWithHandle() {
     try {
       const [handle] = await window.showOpenFilePicker({
-        types: [{ description: "Story map", accept: { "text/yaml": [".yml", ".yaml"] } }],
+        types: STORY_MAP_FILE_TYPES,
       });
       pick(handle);
     } catch (e) {
@@ -44,7 +42,7 @@ export default function FilePicker({ onPick }) {
     const item = e.dataTransfer.items[0];
     if (!item || item.kind !== "file") return setProblem(NOT_A_FILE);
     // getAsFileSystemHandle must be called while the drop event is being dispatched.
-    if (canWatchFiles && item.getAsFileSystemHandle) {
+    if (canOpenInPlace && item.getAsFileSystemHandle) {
       item
         .getAsFileSystemHandle()
         .then(pick)
@@ -66,7 +64,7 @@ export default function FilePicker({ onPick }) {
     >
       <h2>Open a story map</h2>
       <p>Drop a YAML file here, or pick one.</p>
-      {canWatchFiles ? (
+      {canOpenInPlace ? (
         <button onClick={pickWithHandle}>Choose file</button>
       ) : (
         <input
@@ -76,7 +74,7 @@ export default function FilePicker({ onPick }) {
         />
       )}
       {problem && <p className="problem">{problem}</p>}
-      <p>{canWatchFiles ? WATCH_HINT : COPY_HINT}</p>
+      <p>{canOpenInPlace ? WATCH_HINT : COPY_HINT}</p>
     </div>
   );
 }

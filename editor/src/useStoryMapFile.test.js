@@ -148,6 +148,20 @@ describe("useStoryMapFile", () => {
     expect(result.current.moveError).toBeNull();
   });
 
+  it("reports a failed save as… with the other save errors", async () => {
+    window.showSaveFilePicker = async () => {
+      throw new Error("disk full");
+    };
+    const { result } = await load(memorySource(YAML, { writable: false }));
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveAs();
+    });
+    expect(saved).toBeNull();
+    expect(result.current.saveError).toBe("Not saved: disk full");
+    delete window.showSaveFilePicker;
+  });
+
   it("only marks edits as unsaved when the source cannot be written", async () => {
     const source = memorySource(YAML, { writable: false });
     const { result } = await load(source);

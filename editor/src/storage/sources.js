@@ -9,6 +9,24 @@
 //
 // Adding a backend (local server, Git, …) means adding a function here, not changing the app.
 
+// What the browser can do with files. Chromium browsers (Chrome, Edge) implement the File
+// System Access API; the others only give a one-time copy of an opened file.
+
+/** Whether opened files can be watched and saved in place (FileSystemFileHandle). */
+export function canOpenFilesInPlace() {
+  return typeof window.showOpenFilePicker === "function";
+}
+
+/** Whether a new file can be created and then edited in place ("Save as…"). */
+export function canSaveAsNewFile() {
+  return typeof window.showSaveFilePicker === "function";
+}
+
+/** The file type offered by the browser's open and save dialogs. */
+export const STORY_MAP_FILE_TYPES = [
+  { description: "Story map", accept: { "text/yaml": [".yml", ".yaml"] } },
+];
+
 /** The stored file changed since it was read; the message is meant for the user. */
 export class WriteConflictError extends Error {
   name = "WriteConflictError";
@@ -57,6 +75,44 @@ export function fileCopySource(file) {
       throw new Error("this browser cannot write to the file: download it instead.");
     },
   };
+}
+
+/**
+ * A story map that only lives in the page (the sample, or a blank map) until it is saved to
+ * a file: read from `text`, never written.
+ */
+export function memorySource(name, text) {
+  return {
+    name,
+    writable: false,
+    inMemory: true,
+    version: async () => 0,
+    read: async () => ({ text, version: 0 }),
+    async write() {
+      throw new Error("this story map is not saved to a file yet.");
+    },
+  };
+}
+
+/**
+ * Saves `text` to a new file the user chooses (Chrome, Edge) and returns a source for it, so
+ * the map is then edited in that file. Null when the user cancels.
+ */
+export async function saveAsNewFile(suggestedName, text) {
+  let handle;
+  try {
+    handle = await window.showSaveFilePicker({
+      suggestedName,
+      types: STORY_MAP_FILE_TYPES,
+    });
+  } catch (e) {
+    if (e.name === "AbortError") return null;
+    throw e;
+  }
+  const writable = await handle.createWritable();
+  await writable.write(text);
+  await writable.close();
+  return fileHandleSource(handle);
 }
 
 /** Source for what the file picker returned: a FileSystemFileHandle or a File. */
