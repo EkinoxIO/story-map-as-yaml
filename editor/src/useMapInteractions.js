@@ -1,23 +1,48 @@
+import { useEffect, useRef } from "react";
 import { ITEM_KIND } from "./domain/storyMap.js";
 import { UNASSIGNED } from "./mapLayout.js";
-import { canDropStories, drop } from "./mapMoves.js";
+import { canDropStories, drop, isMoveKey, keyboardMove } from "./mapMoves.js";
 import useDragAndDrop from "./useDragAndDrop.js";
 
+const itemKey = (item) => `${item.kind}:${item.id}`;
 const is = (kind) => (dragged) => dragged.kind === kind;
 
 /**
- * How the items of the map are moved by drag and drop. Returns the props to spread on each
- * part of the map, so the map component only lays out the grid:
- * - movable(item): the draggable part of an item ({ kind, id })
+ * How the items of the map are moved: by drag and drop, and with Alt + arrow keys. Returns
+ * the props to spread on each part of the map, so the map component only lays out the grid:
+ * - movable(item): the focusable, draggable part of an item ({ kind, id }, plus its column
+ *   for a task and its column and row for a story)
  * - releaseDrop, activityDrop, taskDrop, cellDrop, storyProps: what each part takes when
  *   something is dropped on it, and which move the drop runs (see mapMoves.drop)
+ * - mapRef: for the map element, so a keyboard-moved item gets the focus back
  */
 export default function useMapInteractions(layout, onMove) {
   const { draggable, dropTarget } = useDragAndDrop(onMove);
 
+  // After a keyboard move, the moved item gets the focus back once the map has re-rendered.
+  const focusAfterMove = useRef(null);
+  const mapRef = useRef(null);
+  useEffect(() => {
+    if (!focusAfterMove.current) return;
+    mapRef.current?.querySelector(`[data-item="${focusAfterMove.current}"]`)?.focus();
+    focusAfterMove.current = null;
+  });
+
   function movable(item) {
     if (item.id == null) return {};
-    return draggable({ kind: item.kind, id: item.id });
+    return {
+      ...draggable({ kind: item.kind, id: item.id }),
+      "data-item": itemKey(item),
+      "aria-keyshortcuts": "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight",
+      onKeyDown: (e) => {
+        if (!isMoveKey(e)) return;
+        e.preventDefault();
+        const mutate = keyboardMove(layout, item, e.key);
+        if (!mutate) return;
+        focusAfterMove.current = itemKey(item);
+        onMove(mutate);
+      },
+    };
   }
 
   const releaseDrop = (release) =>
@@ -83,5 +108,5 @@ export default function useMapInteractions(layout, onMove) {
     };
   };
 
-  return { movable, releaseDrop, activityDrop, taskDrop, cellDrop, storyProps };
+  return { mapRef, movable, releaseDrop, activityDrop, taskDrop, cellDrop, storyProps };
 }

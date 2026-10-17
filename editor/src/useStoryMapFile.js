@@ -88,7 +88,7 @@ export default function useStoryMapFile(
     else setUnsaved(true);
   }
 
-  // Runs a move (drag and drop). One that breaks a rule, e.g. because the item
+  // Runs a move (drag and drop, keyboard). One that breaks a rule, e.g. because the item
   // vanished from the file meanwhile, is reported instead of applied.
   function move(mutate) {
     try {

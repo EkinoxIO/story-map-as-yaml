@@ -179,10 +179,8 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
   const { isFolded, toggle } = useFolding();
   const layout = buildLayout(storyMap, isFolded);
   const { activities, columns, rows, storiesIn } = layout;
-  const { movable, releaseDrop, activityDrop, taskDrop, cellDrop, storyProps } = useMapInteractions(
-    layout,
-    onMove,
-  );
+  const { mapRef, movable, releaseDrop, activityDrop, taskDrop, cellDrop, storyProps } =
+    useMapInteractions(layout, onMove);
 
   return (
     <>
@@ -193,11 +191,11 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
         <button className="add" onClick={() => onEdit({ kind: EDIT_KIND.RELEASE })}>
           + Release
         </button>
-        <span className="hint">Drag to reorder.</span>
+        <span className="hint">Drag to reorder, or Alt + arrow keys on a focused item.</span>
       </div>
       {columns.length === 0 && <p>This story map is empty: add an activity to start.</p>}
       {columns.length > 0 && (
-        <div className="map">
+        <div className="map" ref={mapRef}>
           <div className="grid" style={{ gridTemplateColumns: columns.map(columnWidth).join(" ") }}>
             {activities.map((activity, activityIndex) => (
               <ActivityHeader

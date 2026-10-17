@@ -53,9 +53,7 @@ function dragEvent(type, at) {
 }
 function dragAndDrop(element, target, { after = false } = {}) {
   // The drag starts from the item's own focusable part (its title, or the card itself).
-  const source = element.matches('[draggable="true"]')
-    ? element
-    : element.querySelector('[draggable="true"]');
+  const source = element.matches("[data-item]") ? element : element.querySelector("[data-item]");
   target.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 100 });
   const at = after ? 75 : 25;
   fireEvent(source, dragEvent("dragstart", at));
@@ -140,7 +138,7 @@ describe("drag and drop", () => {
     const target = release("Walking Skeleton");
     target.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 100 });
     fireEvent(
-      release("Returning Customers").querySelector('[draggable="true"]'),
+      release("Returning Customers").querySelector("[data-item]"),
       dragEvent("dragstart", 25),
     );
     fireEvent(target, dragEvent("dragover", 75));
@@ -167,7 +165,7 @@ describe("drag image", () => {
     renderMap();
     for (const container of [activity("Discover"), task("Search"), release("Walking Skeleton")]) {
       container.getBoundingClientRect = () => ({ left: 10, top: 2, width: 200, height: 40 });
-      const calls = startDrag(container.querySelector('[draggable="true"]'));
+      const calls = startDrag(container.querySelector("[data-item]"));
       expect(calls).toEqual([[container, 20, 10]]);
     }
   });
@@ -180,13 +178,41 @@ describe("drag image", () => {
   it("fades the whole header while its title is dragged", () => {
     renderMap();
     const header = activity("Discover");
-    startDrag(header.querySelector('[draggable="true"]'));
-    expect(header.querySelector('[draggable="true"]').hasAttribute("data-dragging")).toBe(true);
+    startDrag(header.querySelector("[data-item]"));
+    expect(header.querySelector("[data-item]").hasAttribute("data-dragging")).toBe(true);
     expect(header.matches(":has(> [data-dragging])")).toBe(true);
   });
 });
 
-describe("story cards", () => {
+describe("keyboard moves", () => {
+  it("move a focused story with Alt + arrow keys and keep it focused", () => {
+    const map = renderMap();
+    const us1 = card("US-1");
+    us1.focus();
+    fireEvent.keyDown(us1, { key: "ArrowDown", altKey: true });
+    expect(ids(map.current().activities[0].tasks[0].stories)).toEqual(["US-2", "US-1"]);
+    expect(document.activeElement).toBe(card("US-1"));
+  });
+
+  it("move a story into another release row and keep the focus on it", () => {
+    const map = renderMap();
+    fireEvent.keyDown(card("US-2"), { key: "ArrowDown", altKey: true });
+    fireEvent.keyDown(card("US-2"), { key: "ArrowDown", altKey: true });
+    expect(map.current().activities[0].tasks[0].stories.find((s) => s.id === "US-2").release).toBe(
+      "v2",
+    );
+    expect(document.activeElement).toBe(card("US-2"));
+  });
+
+  it("move a release with Alt + arrow keys on its title", () => {
+    const map = renderMap();
+    fireEvent.keyDown(release("Returning Customers").querySelector("[data-item]"), {
+      key: "ArrowUp",
+      altKey: true,
+    });
+    expect(ids(map.current().releases)).toEqual(["v2", "MVP"]);
+  });
+
   it("opens a story with Enter, as a button would", () => {
     const edits = [];
     render(
