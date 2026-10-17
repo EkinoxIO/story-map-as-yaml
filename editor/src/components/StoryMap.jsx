@@ -1,23 +1,13 @@
-import { Fragment } from "react";
-import {
-  ITEM_KIND,
-  allStories,
-  moveActivity,
-  moveRelease,
-  moveStory,
-  moveTask,
-} from "../domain/storyMap.js";
+import { Fragment, useEffect, useRef } from "react";
+import { ITEM_KIND } from "../domain/storyMap.js";
 import { EDIT_KIND } from "../editTargets.js";
+import { UNASSIGNED, buildLayout, columnWidth } from "../mapLayout.js";
+import { canDropStories, drop, isMoveKey, keyboardMove } from "../mapMoves.js";
 import { statusColor } from "../statusColors.js";
 import useDragAndDrop from "../useDragAndDrop.js";
 import { foldKey } from "../folding.js";
 import useFolding from "../useFolding.js";
-
-const UNASSIGNED = {
-  id: "__unassigned__",
-  title: "Unassigned",
-  goal: "Stories whose release is not listed under `releases`.",
-};
+import Clickable from "./Clickable.jsx";
 
 function FoldToggle({ folded, label, onToggle }) {
   return (
@@ -36,32 +26,32 @@ function FoldToggle({ folded, label, onToggle }) {
 
 // A compact card (under a folded task) shows only the story id and, through its left border
 // color, its status: how many stories and how far along, not what they are.
-function StoryCard({ story, compact, onClick, rootProps }) {
+function StoryCard({ story, compact, onActivate, itemProps }) {
   const style = { "--status-color": statusColor(story.status) };
   if (compact) {
     return (
-      <button
-        className="block story compact"
+      <Clickable
+        className="story compact"
         style={style}
         title={story.id}
-        onClick={onClick}
-        {...rootProps}
+        onActivate={onActivate}
+        {...itemProps}
       >
         <div className="id">{story.id}</div>
-      </button>
+      </Clickable>
     );
   }
   return (
-    <button className="block story" style={style} onClick={onClick} {...rootProps}>
+    <Clickable className="story" style={style} onActivate={onActivate} {...itemProps}>
       <div className="id">{story.id}</div>
       <div>{story.title}</div>
       <div className="tags">{story.status && <span className="tag">{story.status}</span>}</div>
-    </button>
+    </Clickable>
   );
 }
 
 // A folded release keeps its title and id; its goal and stories are hidden.
-function ReleaseBand({ release, folded, onToggle, onEdit, rootProps }) {
+function ReleaseBand({ release, folded, onToggle, onEdit, rootProps, itemProps }) {
   const toggle = (
     <FoldToggle folded={folded} label={`release ${release.title}`} onToggle={onToggle} />
   );
@@ -79,16 +69,17 @@ function ReleaseBand({ release, folded, onToggle, onEdit, rootProps }) {
   return (
     <div className="release" {...rootProps}>
       {toggle}
-      <button
-        className="block"
-        onClick={() =>
+      <Clickable
+        className="title"
+        onActivate={() =>
           onEdit({ kind: EDIT_KIND.RELEASE, releaseIndex: release.releaseIndex, id: release.id })
         }
+        {...itemProps}
       >
         <strong>{release.title}</strong>
         <span className="tag">{release.id}</span>
         {!folded && <div className="goal">{release.goal}</div>}
-      </button>
+      </Clickable>
     </div>
   );
 }
@@ -104,8 +95,8 @@ function Cell({ column, release, stories, onEdit, rootProps, storyProps }) {
           key={story.id ?? storyIndex}
           story={story}
           compact={taskFolded}
-          rootProps={storyProps(story)}
-          onClick={() =>
+          itemProps={storyProps(story)}
+          onActivate={() =>
             onEdit({ kind: EDIT_KIND.STORY, activityIndex, taskIndex, storyIndex, id: story.id })
           }
         />
@@ -131,16 +122,18 @@ function Cell({ column, release, stories, onEdit, rootProps, storyProps }) {
 }
 
 // A folded activity keeps its title over one narrow, empty column per task.
-function ActivityHeader({ activity, activityIndex, span, folded, onToggle, onEdit, rootProps }) {
+function ActivityHeader(props) {
+  const { activity, activityIndex, span, folded, onToggle, onEdit, rootProps, itemProps } = props;
   return (
     <div className="activity" style={{ gridColumn: `span ${span}` }} {...rootProps}>
       <FoldToggle folded={folded} label={`activity ${activity.title}`} onToggle={onToggle} />
-      <button
-        className="block"
-        onClick={() => onEdit({ kind: EDIT_KIND.ACTIVITY, activityIndex, id: activity.id })}
+      <Clickable
+        className="title"
+        onActivate={() => onEdit({ kind: EDIT_KIND.ACTIVITY, activityIndex, id: activity.id })}
+        {...itemProps}
       >
         {activity.title}
-      </button>
+      </Clickable>
       {!folded && (
         <button
           className="add"
@@ -157,7 +150,7 @@ function ActivityHeader({ activity, activityIndex, span, folded, onToggle, onEdi
 // A folded task keeps its title, in a column only as wide as needed; its stories show
 // only their id. Under a folded activity, each task is an empty block: the number of tasks
 // stays visible, not their titles.
-function TaskHeader({ column, onToggle, onEdit, rootProps }) {
+function TaskHeader({ column, onToggle, onEdit, rootProps, itemProps }) {
   const { activityIndex, taskIndex, task } = column;
   if (column.activityFolded) return <div className="task placeholder" aria-hidden="true" />;
   if (!task) {
@@ -170,180 +163,115 @@ function TaskHeader({ column, onToggle, onEdit, rootProps }) {
   return (
     <div className="task" {...rootProps}>
       <FoldToggle folded={column.taskFolded} label={`task ${task.title}`} onToggle={onToggle} />
-      <button
-        className="block"
-        onClick={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, taskIndex, id: task.id })}
+      <Clickable
+        className="title"
+        onActivate={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, taskIndex, id: task.id })}
+        {...itemProps}
       >
         {task.title}
-      </button>
+      </Clickable>
     </div>
   );
 }
 
-// Folded columns are only as wide as their content; the others have the standard width.
-function columnWidth(column) {
-  return column.activityFolded || column.taskFolded ? "max-content" : "var(--col-width)";
-}
-
-// The id after `id` in `ids`, or null when it is the last: dropping "after" an item means
-// dropping before the next one.
-function nextAfter(ids, id) {
-  return ids[ids.indexOf(id) + 1] ?? null;
-}
-
-const ids = (items) => (items || []).map((item) => item.id);
+const itemKey = (item) => `${item.kind}:${item.id}`;
 
 export default function StoryMap({ storyMap, onEdit, onMove }) {
   const { isFolded, toggle } = useFolding();
   const { draggable, dropTarget } = useDragAndDrop(onMove);
+  const layout = buildLayout(storyMap, isFolded);
+  const { activities, columns, rows, storiesIn } = layout;
   const is = (kind) => (dragged) => dragged.kind === kind;
-  const activities = storyMap.activities || [];
-  // One column per task; an activity without tasks still gets one, so it can be filled.
-  const columns = activities.flatMap((activity, activityIndex) => {
-    const tasks = activity.tasks || [];
-    const activityFolded = isFolded(foldKey.activity(activity, activityIndex));
-    if (!tasks.length) {
-      return [{ key: `${activityIndex}-empty`, activityIndex, task: null, activityFolded }];
-    }
-    return tasks.map((task, taskIndex) => {
-      const taskFoldKey = foldKey.task(task, activityIndex, taskIndex);
-      return {
-        key: task.id ?? `${activityIndex}-${taskIndex}`,
-        activityIndex,
-        taskIndex,
-        task,
-        foldKey: taskFoldKey,
-        activityFolded,
-        taskFolded: !activityFolded && isFolded(taskFoldKey),
-      };
-    });
-  });
-  const releases = (storyMap.releases || []).map((release, releaseIndex) => ({
-    ...release,
-    releaseIndex,
-  }));
-  const knownReleases = new Set(releases.map((r) => r.id));
-  const stories = allStories(storyMap);
-  const hasUnassigned = stories.some(({ story }) => !knownReleases.has(story.release));
-  const rows = hasUnassigned ? [...releases, UNASSIGNED] : releases;
 
-  // Drag and drop: what each element can take, and which domain move a drop runs.
-  const releaseProps = (release) =>
+  // After a keyboard move, the moved item gets the focus back once the map has re-rendered.
+  const focusAfterMove = useRef(null);
+  const mapRef = useRef(null);
+  useEffect(() => {
+    if (!focusAfterMove.current) return;
+    mapRef.current?.querySelector(`[data-item="${focusAfterMove.current}"]`)?.focus();
+    focusAfterMove.current = null;
+  });
+
+  // Props for the focusable part of a movable item: it is dragged, and Alt + arrows move it.
+  function movable(item) {
+    if (item.id == null) return {};
+    return {
+      ...draggable({ kind: item.kind, id: item.id }),
+      "data-item": itemKey(item),
+      "aria-keyshortcuts": "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight",
+      onKeyDown: (e) => {
+        if (!isMoveKey(e)) return;
+        e.preventDefault();
+        const mutate = keyboardMove(layout, item, e.key);
+        if (!mutate) return;
+        focusAfterMove.current = itemKey(item);
+        onMove(mutate);
+      },
+    };
+  }
+
+  // Drop targets: what each part of the map takes, and which move a drop runs.
+  const releaseDrop = (release) =>
     release === UNASSIGNED || release.id == null
       ? {}
-      : {
-          ...draggable({ kind: ITEM_KIND.RELEASE, id: release.id }),
-          ...dropTarget({
-            key: `release:${release.id}`,
-            accepts: is(ITEM_KIND.RELEASE),
-            axis: () => "y",
-            move: (dragged, after) => (doc) =>
-              moveRelease(
-                doc,
-                dragged.id,
-                after ? nextAfter(ids(releases), release.id) : release.id,
-              ),
-          }),
-        };
+      : dropTarget({
+          key: `release:${release.id}`,
+          accepts: is(ITEM_KIND.RELEASE),
+          axis: () => "y",
+          move: (dragged, after) => drop.release(layout, release, dragged.id, after),
+        });
 
-  // An activity takes activities (before or after it) and tasks (at its end).
-  const activityProps = (activity) =>
+  const activityDrop = (activity) =>
     activity.id == null
       ? {}
-      : {
-          ...draggable({ kind: ITEM_KIND.ACTIVITY, id: activity.id }),
-          ...dropTarget({
-            key: `activity:${activity.id}`,
-            accepts: (dragged) => is(ITEM_KIND.ACTIVITY)(dragged) || is(ITEM_KIND.TASK)(dragged),
-            axis: (dragged) => (is(ITEM_KIND.ACTIVITY)(dragged) ? "x" : null),
-            move: (dragged, after) => (doc) =>
-              is(ITEM_KIND.TASK)(dragged)
-                ? moveTask(doc, dragged.id, { activityId: activity.id })
-                : moveActivity(
-                    doc,
-                    dragged.id,
-                    after ? nextAfter(ids(activities), activity.id) : activity.id,
-                  ),
-          }),
-        };
+      : dropTarget({
+          key: `activity:${activity.id}`,
+          accepts: (dragged) => is(ITEM_KIND.ACTIVITY)(dragged) || is(ITEM_KIND.TASK)(dragged),
+          axis: (dragged) => (is(ITEM_KIND.ACTIVITY)(dragged) ? "x" : null),
+          move: (dragged, after) => drop.activity(layout, activity, dragged, after),
+        });
 
-  // A task header takes tasks, from any activity; "No task yet" takes them into its activity.
-  const taskProps = (column) => {
+  const taskDrop = (column) => {
     const activity = activities[column.activityIndex];
     if (activity.id == null) return {};
     if (!column.task) {
       return dropTarget({
         key: `empty:${activity.id}`,
         accepts: is(ITEM_KIND.TASK),
-        move: (dragged) => (doc) => moveTask(doc, dragged.id, { activityId: activity.id }),
+        move: (dragged) => drop.emptyActivity(activity, dragged.id),
       });
     }
-    const { task } = column;
-    if (task.id == null) return {};
-    return {
-      ...draggable({ kind: ITEM_KIND.TASK, id: task.id }),
-      ...dropTarget({
-        key: `task:${task.id}`,
-        accepts: is(ITEM_KIND.TASK),
-        axis: () => "x",
-        move: (dragged, after) => (doc) =>
-          moveTask(doc, dragged.id, {
-            activityId: activity.id,
-            beforeId: after ? nextAfter(ids(activity.tasks), task.id) : task.id,
-          }),
-      }),
-    };
+    if (column.task.id == null) return {};
+    return dropTarget({
+      key: `task:${column.task.id}`,
+      accepts: is(ITEM_KIND.TASK),
+      axis: () => "x",
+      move: (dragged, after) => drop.task(layout, column, dragged.id, after),
+    });
   };
 
-  // A cell takes stories into its task and release, at the end of that release's stories;
-  // a story card takes them before or after itself. Stories can be dragged out of the
-  // Unassigned row, not into it.
-  const canDropStories = (column, release) =>
-    column.task?.id != null && release !== UNASSIGNED && !column.activityFolded;
-
-  const cellProps = (column, release) =>
-    canDropStories(column, release)
+  const cellDrop = (column, row) =>
+    canDropStories(column, row)
       ? dropTarget({
-          key: `cell:${column.task.id}:${release.id}`,
+          key: `cell:${column.task.id}:${row.id}`,
           accepts: is(ITEM_KIND.STORY),
-          move: (dragged) => (doc) =>
-            moveStory(doc, dragged.id, { taskId: column.task.id, release: release.id }),
+          move: (dragged) => drop.cell(column, row, dragged.id),
         })
       : {};
 
-  const storyProps = (column, release, cellStories) => (story) => {
-    if (story.id == null) return {};
-    const drag = draggable({ kind: ITEM_KIND.STORY, id: story.id });
-    if (!canDropStories(column, release)) return drag;
+  const storyProps = (column, row, cellStories) => (story) => {
+    const props = movable({ kind: ITEM_KIND.STORY, id: story.id, column, row });
+    if (story.id == null || !canDropStories(column, row)) return props;
     return {
-      ...drag,
+      ...props,
       ...dropTarget({
         key: `story:${story.id}`,
         accepts: is(ITEM_KIND.STORY),
         axis: () => "y",
-        move: (dragged, after) => (doc) =>
-          moveStory(doc, dragged.id, {
-            taskId: column.task.id,
-            release: release.id,
-            beforeId: after
-              ? nextAfter(
-                  cellStories.map((s) => s.story.id),
-                  story.id,
-                )
-              : story.id,
-          }),
+        move: (dragged, after) => drop.story(column, row, cellStories, story, dragged.id, after),
       }),
     };
   };
-
-  function storiesIn(column, release) {
-    return stories.filter(
-      ({ story, activityIndex, taskIndex }) =>
-        activityIndex === column.activityIndex &&
-        taskIndex === column.taskIndex &&
-        (release === UNASSIGNED ? !knownReleases.has(story.release) : story.release === release.id),
-    );
-  }
 
   return (
     <>
@@ -354,10 +282,11 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
         <button className="add" onClick={() => onEdit({ kind: EDIT_KIND.RELEASE })}>
           + Release
         </button>
+        <span className="hint">Drag to reorder, or Alt + arrow keys on a focused item.</span>
       </div>
       {columns.length === 0 && <p>This story map is empty: add an activity to start.</p>}
       {columns.length > 0 && (
-        <div className="map">
+        <div className="map" ref={mapRef}>
           <div className="grid" style={{ gridTemplateColumns: columns.map(columnWidth).join(" ") }}>
             {activities.map((activity, activityIndex) => {
               const key = foldKey.activity(activity, activityIndex);
@@ -367,10 +296,11 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
                   activity={activity}
                   activityIndex={activityIndex}
                   span={columns.filter((c) => c.activityIndex === activityIndex).length}
-                  folded={isFolded(key)}
+                  folded={activity.folded}
                   onToggle={() => toggle(key)}
                   onEdit={onEdit}
-                  rootProps={activityProps(activity)}
+                  rootProps={activityDrop(activity)}
+                  itemProps={movable({ kind: ITEM_KIND.ACTIVITY, id: activity.id })}
                 />
               );
             })}
@@ -380,33 +310,38 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
                 column={column}
                 onToggle={column.foldKey && (() => toggle(column.foldKey))}
                 onEdit={onEdit}
-                rootProps={taskProps(column)}
+                rootProps={taskDrop(column)}
+                itemProps={
+                  column.task && movable({ kind: ITEM_KIND.TASK, id: column.task.id, column })
+                }
               />
             ))}
-            {rows.map((release) => {
-              const key = foldKey.release(release);
-              const folded = isFolded(key);
+            {rows.map((row) => {
+              const key = foldKey.release(row);
+              // Releases carry their fold state; the Unassigned row is not a release.
+              const folded = row.folded ?? isFolded(key);
               return (
-                <Fragment key={release.releaseIndex ?? release.id}>
+                <Fragment key={row.releaseIndex ?? row.id}>
                   <ReleaseBand
-                    release={release}
+                    release={row}
                     folded={folded}
                     onToggle={() => toggle(key)}
                     onEdit={onEdit}
-                    rootProps={releaseProps(release)}
+                    rootProps={releaseDrop(row)}
+                    itemProps={movable({ kind: ITEM_KIND.RELEASE, id: row.id })}
                   />
                   {!folded &&
                     columns.map((column) => {
-                      const cellStories = storiesIn(column, release);
+                      const cellStories = storiesIn(column, row);
                       return (
                         <Cell
                           key={column.key}
                           column={column}
-                          release={release}
+                          release={row}
                           stories={cellStories}
                           onEdit={onEdit}
-                          rootProps={cellProps(column, release)}
-                          storyProps={storyProps(column, release, cellStories)}
+                          rootProps={cellDrop(column, row)}
+                          storyProps={storyProps(column, row, cellStories)}
                         />
                       );
                     })}

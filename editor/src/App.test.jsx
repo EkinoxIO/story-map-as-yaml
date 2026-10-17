@@ -95,6 +95,14 @@ describe("App", () => {
     expect(await screen.findByText('Story US-2 refers to unknown release "v9".')).toBeTruthy();
   });
 
+  it("ignores a file dropped from outside onto an open map", async () => {
+    await openFile();
+    const drop = new Event("drop", { bubbles: true, cancelable: true });
+    Object.defineProperty(drop, "dataTransfer", { value: { types: ["Files"] } });
+    window.dispatchEvent(drop);
+    expect(drop.defaultPrevented).toBe(true); // the browser does not open the file instead
+  });
+
   it("closes the dialog for good when its item is deleted on disk", async () => {
     await openFile();
     fireEvent.click(screen.getByText("Pay by card"));

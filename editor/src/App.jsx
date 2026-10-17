@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { checkReferences, StoryMapError } from "./domain/storyMap.js";
+import { checkReferences } from "./domain/storyMap.js";
 import { sourceFor } from "./storage/sources.js";
 import useStoryMapFile from "./useStoryMapFile.js";
 import { dialogFor, EDIT_KIND } from "./editTargets.js";
@@ -11,11 +11,8 @@ import StoryMap from "./components/StoryMap.jsx";
 export default function App({ pollIntervalMs }) {
   const [source, setSource] = useState(null);
   const [editing, setEditing] = useState(null);
-  const [moveError, setMoveError] = useState(null);
-  const { storyMap, loadError, saveError, unsaved, applyAndSave, downloadCopy } = useStoryMapFile(
-    source,
-    { pollIntervalMs },
-  );
+  const { storyMap, loadError, saveError, moveError, unsaved, applyAndSave, move, downloadCopy } =
+    useStoryMapFile(source, { pollIntervalMs });
 
   const dialog = editing && storyMap && dialogFor(editing, storyMap, applyAndSave);
   // The edited item was deleted on disk while its dialog was open.
@@ -25,17 +22,21 @@ export default function App({ pollIntervalMs }) {
   }, [editedItemGone]);
   const problems = storyMap ? checkReferences(storyMap) : [];
 
-  // A drag and drop runs a domain move; one that breaks a rule (e.g. the item vanished from
-  // the file meanwhile) is reported instead of applied.
-  function move(mutate) {
-    try {
-      applyAndSave(mutate);
-      setMoveError(null);
-    } catch (e) {
-      if (!(e instanceof StoryMapError)) throw e;
-      setMoveError(`Not moved: ${e.message}`);
-    }
-  }
+  // While a map is open, a file dragged in from outside the page is ignored: the browser
+  // would otherwise open it in place of the editor. Drags inside the map carry no files.
+  const mapOpen = Boolean(storyMap);
+  useEffect(() => {
+    if (!mapOpen) return;
+    const ignoreFiles = (e) => {
+      if (e.dataTransfer?.types?.includes("Files")) e.preventDefault();
+    };
+    window.addEventListener("dragover", ignoreFiles);
+    window.addEventListener("drop", ignoreFiles);
+    return () => {
+      window.removeEventListener("dragover", ignoreFiles);
+      window.removeEventListener("drop", ignoreFiles);
+    };
+  }, [mapOpen]);
 
   return (
     <>

@@ -9,6 +9,8 @@
   --release: #eef1f5;
   --danger: #cf222e;
   --col-width: 200px;
+  --focus: #0969da;
+  --drop: #0969da;
 }
 * {
   box-sizing: border-box;
@@ -307,28 +309,43 @@ button.fold {
 [data-dragging] {
   opacity: 0.4;
 }
-[data-drop="before"],
-[data-drop="after"],
 [data-drop="into"] {
-  --drop-color: #0969da;
-}
-[data-drop="into"] {
-  outline: 2px dashed var(--drop-color);
+  outline: 2px dashed var(--drop);
   outline-offset: -2px;
 }
 .activity[data-drop="before"],
 .task[data-drop="before"] {
-  box-shadow: inset 4px 0 0 var(--drop-color);
+  box-shadow: inset 4px 0 0 var(--drop);
 }
 .activity[data-drop="after"],
 .task[data-drop="after"] {
-  box-shadow: inset -4px 0 0 var(--drop-color);
+  box-shadow: inset -4px 0 0 var(--drop);
 }
 .story[data-drop="before"],
 .release[data-drop="before"] {
-  box-shadow: inset 0 4px 0 var(--drop-color);
+  box-shadow: inset 0 4px 0 var(--drop);
 }
 .story[data-drop="after"],
 .release[data-drop="after"] {
-  box-shadow: inset 0 -4px 0 var(--drop-color);
+  box-shadow: inset 0 -4px 0 var(--drop);
+}
+
+/* Clickable titles and cards (role="button", not <button>, so they can be dragged in Firefox). */
+[role="button"] {
+  cursor: pointer;
+}
+[role="button"]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.activity .title,
+.task .title,
+.release .title {
+  flex: 1;
+  min-width: 0;
+}
+.toolbar .hint {
+  align-self: center;
+  color: var(--muted);
+  font-size: 12px;
 }

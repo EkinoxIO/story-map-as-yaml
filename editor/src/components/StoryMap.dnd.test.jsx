@@ -51,7 +51,9 @@ function dragEvent(type, at) {
   Object.defineProperty(event, "dataTransfer", { value: dataTransfer });
   return event;
 }
-function dragAndDrop(source, target, { after = false } = {}) {
+function dragAndDrop(element, target, { after = false } = {}) {
+  // The drag starts from the item's own focusable part (its title, or the card itself).
+  const source = element.matches("[data-item]") ? element : element.querySelector("[data-item]");
   target.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 100 });
   const at = after ? 75 : 25;
   fireEvent(source, dragEvent("dragstart", at));
@@ -135,8 +137,49 @@ describe("drag and drop", () => {
     renderMap();
     const target = release("Walking Skeleton");
     target.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 100 });
-    fireEvent(release("Returning Customers"), dragEvent("dragstart", 25));
+    fireEvent(
+      release("Returning Customers").querySelector("[data-item]"),
+      dragEvent("dragstart", 25),
+    );
     fireEvent(target, dragEvent("dragover", 75));
     expect(target.getAttribute("data-drop")).toBe("after");
+  });
+});
+
+describe("keyboard moves", () => {
+  it("move a focused story with Alt + arrow keys and keep it focused", () => {
+    const map = renderMap();
+    const us1 = card("US-1");
+    us1.focus();
+    fireEvent.keyDown(us1, { key: "ArrowDown", altKey: true });
+    expect(ids(map.current().activities[0].tasks[0].stories)).toEqual(["US-2", "US-1"]);
+    expect(document.activeElement).toBe(card("US-1"));
+  });
+
+  it("move a story into another release row and keep the focus on it", () => {
+    const map = renderMap();
+    fireEvent.keyDown(card("US-2"), { key: "ArrowDown", altKey: true });
+    fireEvent.keyDown(card("US-2"), { key: "ArrowDown", altKey: true });
+    expect(map.current().activities[0].tasks[0].stories.find((s) => s.id === "US-2").release).toBe(
+      "v2",
+    );
+    expect(document.activeElement).toBe(card("US-2"));
+  });
+
+  it("move a release with Alt + arrow keys on its title", () => {
+    const map = renderMap();
+    fireEvent.keyDown(release("Returning Customers").querySelector("[data-item]"), {
+      key: "ArrowUp",
+      altKey: true,
+    });
+    expect(ids(map.current().releases)).toEqual(["v2", "MVP"]);
+  });
+
+  it("opens a story with Enter, as a button would", () => {
+    const edits = [];
+    let doc = parseStoryMap(YAML);
+    render(<StoryMap storyMap={doc.toJS()} onEdit={(t) => edits.push(t)} onMove={() => {}} />);
+    fireEvent.keyDown(card("US-1"), { key: "Enter" });
+    expect(edits).toEqual([expect.objectContaining({ kind: "story", id: "US-1" })]);
   });
 });
