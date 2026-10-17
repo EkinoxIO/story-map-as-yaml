@@ -1,11 +1,10 @@
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment } from "react";
 import { ITEM_KIND } from "../domain/storyMap.js";
 import { EDIT_KIND } from "../editTargets.js";
 import { UNASSIGNED, buildLayout, columnWidth } from "../mapLayout.js";
-import { canDropStories, drop, isMoveKey, keyboardMove } from "../mapMoves.js";
 import { statusColor } from "../statusColors.js";
-import useDragAndDrop from "../useDragAndDrop.js";
 import useFolding from "../useFolding.js";
+import useMapInteractions from "../useMapInteractions.js";
 import Clickable from "./Clickable.jsx";
 
 function FoldToggle({ folded, label, onToggle }) {
@@ -176,104 +175,12 @@ function TaskHeader({ column, onToggle, onEdit, rootProps, itemProps }) {
   );
 }
 
-const itemKey = (item) => `${item.kind}:${item.id}`;
-
 export default function StoryMap({ storyMap, onEdit, onMove }) {
   const { isFolded, toggle } = useFolding();
-  const { draggable, dropTarget } = useDragAndDrop(onMove);
   const layout = buildLayout(storyMap, isFolded);
   const { activities, columns, rows, storiesIn } = layout;
-  const is = (kind) => (dragged) => dragged.kind === kind;
-
-  // After a keyboard move, the moved item gets the focus back once the map has re-rendered.
-  const focusAfterMove = useRef(null);
-  const mapRef = useRef(null);
-  useEffect(() => {
-    if (!focusAfterMove.current) return;
-    mapRef.current?.querySelector(`[data-item="${focusAfterMove.current}"]`)?.focus();
-    focusAfterMove.current = null;
-  });
-
-  // Props for the focusable part of a movable item: it is dragged, and Alt + arrows move it.
-  function movable(item) {
-    if (item.id == null) return {};
-    return {
-      ...draggable({ kind: item.kind, id: item.id }),
-      "data-item": itemKey(item),
-      "aria-keyshortcuts": "Alt+ArrowUp Alt+ArrowDown Alt+ArrowLeft Alt+ArrowRight",
-      onKeyDown: (e) => {
-        if (!isMoveKey(e)) return;
-        e.preventDefault();
-        const mutate = keyboardMove(layout, item, e.key);
-        if (!mutate) return;
-        focusAfterMove.current = itemKey(item);
-        onMove(mutate);
-      },
-    };
-  }
-
-  // Drop targets: what each part of the map takes, and which move a drop runs.
-  const releaseDrop = (release) =>
-    release === UNASSIGNED || release.id == null
-      ? {}
-      : dropTarget({
-          key: `release:${release.id}`,
-          accepts: is(ITEM_KIND.RELEASE),
-          axis: () => "y",
-          move: (dragged, after) => drop.release(layout, release, dragged.id, after),
-        });
-
-  const activityDrop = (activity) =>
-    activity.id == null
-      ? {}
-      : dropTarget({
-          key: `activity:${activity.id}`,
-          accepts: (dragged) => is(ITEM_KIND.ACTIVITY)(dragged) || is(ITEM_KIND.TASK)(dragged),
-          axis: (dragged) => (is(ITEM_KIND.ACTIVITY)(dragged) ? "x" : null),
-          move: (dragged, after) => drop.activity(layout, activity, dragged, after),
-        });
-
-  const taskDrop = (column) => {
-    const activity = activities[column.activityIndex];
-    if (activity.id == null) return {};
-    if (!column.task) {
-      return dropTarget({
-        key: `empty:${activity.id}`,
-        accepts: is(ITEM_KIND.TASK),
-        move: (dragged) => drop.emptyActivity(activity, dragged.id),
-      });
-    }
-    if (column.task.id == null) return {};
-    return dropTarget({
-      key: `task:${column.task.id}`,
-      accepts: is(ITEM_KIND.TASK),
-      axis: () => "x",
-      move: (dragged, after) => drop.task(layout, column, dragged.id, after),
-    });
-  };
-
-  const cellDrop = (column, row) =>
-    canDropStories(column, row)
-      ? dropTarget({
-          key: `cell:${column.task.id}:${row.id}`,
-          accepts: is(ITEM_KIND.STORY),
-          move: (dragged) => drop.cell(column, row, dragged.id),
-        })
-      : {};
-
-  const storyProps = (column, row, cellStories) => (story) => {
-    const props = movable({ kind: ITEM_KIND.STORY, id: story.id, column, row });
-    if (story.id == null || !canDropStories(column, row)) return props;
-    return {
-      ...props,
-      ...dropTarget({
-        key: `story:${story.id}`,
-        accepts: is(ITEM_KIND.STORY),
-        axis: () => "y",
-        move: (dragged, after) => drop.story(column, row, cellStories, story, dragged.id, after),
-      }),
-    };
-  };
+  const { mapRef, movable, releaseDrop, activityDrop, taskDrop, cellDrop, storyProps } =
+    useMapInteractions(layout, onMove);
 
   return (
     <>
@@ -290,22 +197,19 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
       {columns.length > 0 && (
         <div className="map" ref={mapRef}>
           <div className="grid" style={{ gridTemplateColumns: columns.map(columnWidth).join(" ") }}>
-            {activities.map((activity, activityIndex) => {
-              const key = activity.foldKey;
-              return (
-                <ActivityHeader
-                  key={key}
-                  activity={activity}
-                  activityIndex={activityIndex}
-                  span={columns.filter((c) => c.activityIndex === activityIndex).length}
-                  folded={activity.folded}
-                  onToggle={() => toggle(key)}
-                  onEdit={onEdit}
-                  rootProps={activityDrop(activity)}
-                  itemProps={movable({ kind: ITEM_KIND.ACTIVITY, id: activity.id })}
-                />
-              );
-            })}
+            {activities.map((activity, activityIndex) => (
+              <ActivityHeader
+                key={activity.foldKey}
+                activity={activity}
+                activityIndex={activityIndex}
+                span={columns.filter((c) => c.activityIndex === activityIndex).length}
+                folded={activity.folded}
+                onToggle={() => toggle(activity.foldKey)}
+                onEdit={onEdit}
+                rootProps={activityDrop(activity)}
+                itemProps={movable({ kind: ITEM_KIND.ACTIVITY, id: activity.id })}
+              />
+            ))}
             {columns.map((column) => (
               <TaskHeader
                 key={column.key}
@@ -344,7 +248,7 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
                           stories={cellStories}
                           onEdit={onEdit}
                           rootProps={cellDrop(column, row)}
-                          storyProps={storyProps(column, row, cellStories)}
+                          storyProps={storyProps(column, row)}
                         />
                       );
                     })}

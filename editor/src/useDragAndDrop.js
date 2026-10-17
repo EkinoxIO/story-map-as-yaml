@@ -82,5 +82,5 @@ export default function useDragAndDrop(onMove) {
     };
   }
 
-  return { dragged, draggable, dropTarget };
+  return { draggable, dropTarget };
 }

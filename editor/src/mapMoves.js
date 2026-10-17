@@ -21,10 +21,14 @@ export function canDropStories(column, row) {
   return column.task?.id != null && row !== UNASSIGNED && !column.activityFolded;
 }
 
-/** Drops: the mutation for dropping the item `draggedId` on each kind of target. */
+/**
+ * Drops: the mutation for dropping the item `dragged` ({ kind, id }) on each kind of target.
+ * Every one takes (layout, target, dragged, after), `after` being true when the drop lands on
+ * the far half of the target; targets that only take items inside them ignore it.
+ */
 export const drop = {
-  release: (layout, release, draggedId, after) => (doc) =>
-    moveRelease(doc, draggedId, beforeIdFor(ids(layout.releases), release.id, after)),
+  release: (layout, release, dragged, after) => (doc) =>
+    moveRelease(doc, dragged.id, beforeIdFor(ids(layout.releases), release.id, after)),
 
   // An activity takes activities (before or after it) and tasks (at its end).
   activity: (layout, activity, dragged, after) => (doc) =>
@@ -32,27 +36,32 @@ export const drop = {
       ? moveTask(doc, dragged.id, { activityId: activity.id })
       : moveActivity(doc, dragged.id, beforeIdFor(ids(layout.activities), activity.id, after)),
 
-  task: (layout, column, draggedId, after) => (doc) => {
+  task: (layout, column, dragged, after) => (doc) => {
     const activity = layout.activities[column.activityIndex];
-    return moveTask(doc, draggedId, {
+    return moveTask(doc, dragged.id, {
       activityId: activity.id,
       beforeId: beforeIdFor(ids(activity.tasks), column.task.id, after),
     });
   },
 
   // "No task yet" under an activity takes tasks into it.
-  emptyActivity: (activity, draggedId) => (doc) =>
-    moveTask(doc, draggedId, { activityId: activity.id }),
+  emptyActivity: (layout, activity, dragged) => (doc) =>
+    moveTask(doc, dragged.id, { activityId: activity.id }),
 
-  cell: (column, row, draggedId) => (doc) =>
-    moveStory(doc, draggedId, { taskId: column.task.id, release: row.id }),
+  // A cell is { column, row }; a story card is { column, row, story }.
+  cell:
+    (layout, { column, row }, dragged) =>
+    (doc) =>
+      moveStory(doc, dragged.id, { taskId: column.task.id, release: row.id }),
 
-  story: (column, row, cellStories, story, draggedId, after) => (doc) =>
-    moveStory(doc, draggedId, {
-      taskId: column.task.id,
-      release: row.id,
-      beforeId: beforeIdFor(cellIds(cellStories), story.id, after),
-    }),
+  story:
+    (layout, { column, row, story }, dragged, after) =>
+    (doc) =>
+      moveStory(doc, dragged.id, {
+        taskId: column.task.id,
+        release: row.id,
+        beforeId: beforeIdFor(cellIds(layout.storiesIn(column, row)), story.id, after),
+      }),
 };
 
 const UP = "ArrowUp";
@@ -149,7 +158,7 @@ function storyKeyMove(layout, { id, column, row }, key) {
   const index = layout.columns.indexOf(column);
   for (let i = index + step; i >= 0 && i < layout.columns.length; i += step) {
     const target = layout.columns[i];
-    if (target.task?.id != null && !target.activityFolded) {
+    if (canDropStories(target, row)) {
       return (doc) => moveStory(doc, id, { taskId: target.task.id, release: row.id });
     }
   }

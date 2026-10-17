@@ -58,7 +58,7 @@ describe("isMoveKey", () => {
 
 describe("keyboard moves", () => {
   it("move releases up and down, not past the edges", () => {
-    const release = (layout) => ({ kind: ITEM_KIND.RELEASE, id: "v2" });
+    const release = () => ({ kind: ITEM_KIND.RELEASE, id: "v2" });
     expect(ids(press("ArrowUp", release).releases)).toEqual(["v2", "MVP"]);
     expect(press("ArrowDown", release)).toBeNull();
   });

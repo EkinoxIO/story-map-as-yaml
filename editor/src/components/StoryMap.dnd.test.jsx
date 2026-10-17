@@ -215,8 +215,13 @@ describe("keyboard moves", () => {
 
   it("opens a story with Enter, as a button would", () => {
     const edits = [];
-    let doc = parseStoryMap(YAML);
-    render(<StoryMap storyMap={doc.toJS()} onEdit={(t) => edits.push(t)} onMove={() => {}} />);
+    render(
+      <StoryMap
+        storyMap={parseStoryMap(YAML).toJS()}
+        onEdit={(t) => edits.push(t)}
+        onMove={() => {}}
+      />,
+    );
     fireEvent.keyDown(card("US-1"), { key: "Enter" });
     expect(edits).toEqual([expect.objectContaining({ kind: "story", id: "US-1" })]);
   });
