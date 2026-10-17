@@ -299,3 +299,36 @@ button.fold {
 .task.placeholder:hover {
   outline: none;
 }
+
+/* Drag and drop: the dragged item fades; the drop position shows as a bar or an outline. */
+[draggable="true"] {
+  cursor: grab;
+}
+[data-dragging] {
+  opacity: 0.4;
+}
+[data-drop="before"],
+[data-drop="after"],
+[data-drop="into"] {
+  --drop-color: #0969da;
+}
+[data-drop="into"] {
+  outline: 2px dashed var(--drop-color);
+  outline-offset: -2px;
+}
+.activity[data-drop="before"],
+.task[data-drop="before"] {
+  box-shadow: inset 4px 0 0 var(--drop-color);
+}
+.activity[data-drop="after"],
+.task[data-drop="after"] {
+  box-shadow: inset -4px 0 0 var(--drop-color);
+}
+.story[data-drop="before"],
+.release[data-drop="before"] {
+  box-shadow: inset 0 4px 0 var(--drop-color);
+}
+.story[data-drop="after"],
+.release[data-drop="after"] {
+  box-shadow: inset 0 -4px 0 var(--drop-color);
+}

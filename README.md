@@ -35,6 +35,18 @@ Use the ▾ / ▸ toggles to fold:
 Folding only changes the view: nothing is written to the file, and folded items stay folded
 when the file reloads.
 
+Drag and drop to reorder, and the file is saved like any other edit:
+
+- releases: up or down;
+- activities: left or right;
+- tasks: within their activity or into another one (drop on a task, or on an activity's
+  title to put the task last);
+- stories: within their cell, or into another task and/or release (dropping into another
+  release row changes the story's release).
+
+Comments attached to a moved item move with it, and dropping an item where it already is
+changes nothing.
+
 Development (Node 22+):
 
 ```bash

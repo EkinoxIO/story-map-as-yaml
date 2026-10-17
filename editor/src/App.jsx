@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { checkReferences } from "./domain/storyMap.js";
+import { checkReferences, StoryMapError } from "./domain/storyMap.js";
 import { sourceFor } from "./storage/sources.js";
 import useStoryMapFile from "./useStoryMapFile.js";
 import { dialogFor, EDIT_KIND } from "./editTargets.js";
@@ -11,6 +11,7 @@ import StoryMap from "./components/StoryMap.jsx";
 export default function App({ pollIntervalMs }) {
   const [source, setSource] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [moveError, setMoveError] = useState(null);
   const { storyMap, loadError, saveError, unsaved, applyAndSave, downloadCopy } = useStoryMapFile(
     source,
     { pollIntervalMs },
@@ -23,6 +24,18 @@ export default function App({ pollIntervalMs }) {
     if (editedItemGone) setEditing(null);
   }, [editedItemGone]);
   const problems = storyMap ? checkReferences(storyMap) : [];
+
+  // A drag and drop runs a domain move; one that breaks a rule (e.g. the item vanished from
+  // the file meanwhile) is reported instead of applied.
+  function move(mutate) {
+    try {
+      applyAndSave(mutate);
+      setMoveError(null);
+    } catch (e) {
+      if (!(e instanceof StoryMapError)) throw e;
+      setMoveError(`Not moved: ${e.message}`);
+    }
+  }
 
   return (
     <>
@@ -58,6 +71,7 @@ export default function App({ pollIntervalMs }) {
       </header>
       <main>
         {saveError && <div className="error">{saveError}</div>}
+        {moveError && <div className="error">{moveError}</div>}
         {loadError && <div className="error">{loadError}</div>}
         {problems.length > 0 && (
           <div className="warning">
@@ -70,7 +84,7 @@ export default function App({ pollIntervalMs }) {
           </div>
         )}
         {storyMap ? (
-          <StoryMap storyMap={storyMap} onEdit={setEditing} />
+          <StoryMap storyMap={storyMap} onEdit={setEditing} onMove={move} />
         ) : (
           <FilePicker onPick={(picked) => setSource(sourceFor(picked))} />
         )}
