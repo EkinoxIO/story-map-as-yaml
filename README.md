@@ -22,7 +22,8 @@ Start it either way:
 - **Online:** <https://ekinoxio.github.io/story-map-as-yaml/> presents the project
   (`site/index.html`) and opens the editor at
   <https://ekinoxio.github.io/story-map-as-yaml/editor/>. The sample and the schema can be
-  downloaded there too. Both are published from `main` by `.github/workflows/pages.yml`.
+  downloaded there too. Both are published from `main` by `.github/workflows/pages.yml`,
+  once CI has passed.
 - **From disk:** open `editor/dist/index.html` directly in your browser (no build, no server).
   The built file is committed for that reason.
 
