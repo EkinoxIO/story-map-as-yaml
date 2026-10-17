@@ -1,31 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
   <!-- Share image for social networks (Open Graph, X). Rendered to social-card.png with:
        rsvg-convert -w 1200 -h 630 site/social-card.svg -o site/social-card.png -->
-  <rect width="1200" height="630" fill="#f6f7f9"/>
-  <rect width="1200" height="12" fill="#2f4b7c"/>
+  <rect width="1200" height="630" fill="#141416"/>
+  <rect width="1200" height="12" fill="#695acd"/>
 
-  <g font-family="Helvetica, Arial, sans-serif" fill="#1f2328">
+  <g font-family="Poppins, Helvetica, Arial, sans-serif" fill="#ffffff">
     <text x="72" y="150" font-size="68" font-weight="700">Story Map as YAML</text>
-    <text x="72" y="214" font-size="30" fill="#59636e">A visual story map editor whose source of truth</text>
-    <text x="72" y="256" font-size="30" fill="#59636e">is a plain YAML file: for AI agents and people.</text>
+    <text x="72" y="214" font-size="30" fill="#a3a3a8">A visual story map editor whose source of truth</text>
+    <text x="72" y="256" font-size="30" fill="#a3a3a8">is a plain YAML file: for AI agents and people.</text>
   </g>
 
   <!-- A small story map: activities, tasks, then stories in two release rows. -->
   <g font-family="Helvetica, Arial, sans-serif">
-    <rect x="72" y="318" width="512" height="44" rx="8" fill="#2f4b7c"/>
-    <rect x="600" y="318" width="528" height="44" rx="8" fill="#2f4b7c"/>
+    <rect x="72" y="318" width="512" height="44" rx="8" fill="#4a3db5"/>
+    <rect x="600" y="318" width="528" height="44" rx="8" fill="#4a3db5"/>
     <text x="92" y="347" font-size="20" font-weight="700" fill="#ffffff">Discover</text>
     <text x="620" y="347" font-size="20" font-weight="700" fill="#ffffff">Buy</text>
 
-    <g fill="#dbe4f3">
+    <g fill="#cfc8f3">
       <rect x="72" y="372" width="248" height="36" rx="8"/>
       <rect x="336" y="372" width="248" height="36" rx="8"/>
       <rect x="600" y="372" width="256" height="36" rx="8"/>
       <rect x="872" y="372" width="256" height="36" rx="8"/>
     </g>
 
-    <rect x="72" y="420" width="1056" height="6" rx="3" fill="#2f4b7c" opacity="0.35"/>
-    <g fill="#ffffff" stroke="#d0d7de" stroke-width="2">
+    <rect x="72" y="420" width="1056" height="6" rx="3" fill="#a99ff0" opacity="0.5"/>
+    <g fill="#ffffff" stroke="#2c2c31" stroke-width="2">
       <rect x="72" y="438" width="248" height="44" rx="8"/>
       <rect x="336" y="438" width="248" height="44" rx="8"/>
       <rect x="600" y="438" width="256" height="44" rx="8"/>
@@ -36,15 +36,15 @@
     <rect x="72" y="438" width="6" height="44" rx="3" fill="#1a7f37"/>
     <rect x="336" y="438" width="6" height="44" rx="3" fill="#1a7f37"/>
     <rect x="600" y="438" width="6" height="44" rx="3" fill="#bf8700"/>
-    <rect x="872" y="438" width="6" height="44" rx="3" fill="#8250df"/>
-    <rect x="72" y="496" width="1056" height="6" rx="3" fill="#2f4b7c" opacity="0.35"/>
+    <rect x="872" y="438" width="6" height="44" rx="3" fill="#0969da"/>
+    <rect x="72" y="496" width="1056" height="6" rx="3" fill="#a99ff0" opacity="0.5"/>
     <rect x="72" y="514" width="6" height="44" rx="3" fill="#8c959f"/>
     <rect x="600" y="514" width="6" height="44" rx="3" fill="#8c959f"/>
   </g>
 
-  <!-- Ekinox mark: its logo (ekinox-logo.png, next to this file) and name, in its purple. -->
-  <image x="942" y="576" width="40" height="40" href="ekinox-logo.png" xlink:href="ekinox-logo.png"/>
+  <!-- Ekinox mark: its logo (ekinox-logo.png, next to this file) and name. -->
+  <image x="968" y="576" width="40" height="40" href="ekinox-logo.png" xlink:href="ekinox-logo.png"/>
   <g font-family="Helvetica, Arial, sans-serif">
-    <text x="1128" y="604" font-size="24" fill="#59636e" text-anchor="end">by <tspan font-weight="700" fill="#695acd" letter-spacing="1.5">EKINOX</tspan></text>
+    <text x="1128" y="604" font-size="24" fill="#8a8a8a" text-anchor="end">by <tspan font-family="Poppins, Helvetica, Arial, sans-serif" font-weight="600" fill="#ffffff">ekinox</tspan></text>
   </g>
 </svg>
