@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { moveRelease, setMapTitle, StoryMapError } from "./domain/storyMap.js";
 import { WriteConflictError } from "./storage/sources.js";
 import useStoryMapFile from "./useStoryMapFile.js";
+
+// Removed after each test, not at its end, so a failed test does not leak it to the next.
+afterEach(() => {
+  delete window.showSaveFilePicker;
+});
 
 // Poll fast so tests that wait for a reload do not depend on wall-clock margins.
 const options = { pollIntervalMs: 20 };
@@ -147,6 +152,19 @@ describe("useStoryMapFile", () => {
     rerender();
     await waitFor(() => expect(result.current.storyMap?.title).toBe("Other"));
     expect(result.current.moveError).toBeNull();
+  });
+
+  it("reports a failed save as… with the other save errors", async () => {
+    window.showSaveFilePicker = async () => {
+      throw new Error("disk full");
+    };
+    const { result } = await load(fakeSource(YAML, { writable: false }));
+    let saved;
+    await act(async () => {
+      saved = await result.current.saveAs();
+    });
+    expect(saved).toBeNull();
+    expect(result.current.saveError).toBe("Not saved: disk full");
   });
 
   it("only marks edits as unsaved when the source cannot be written", async () => {

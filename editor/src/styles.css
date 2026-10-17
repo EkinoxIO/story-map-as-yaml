@@ -362,3 +362,62 @@ button.fold {
   color: var(--muted);
   font-size: 12px;
 }
+
+/* Start screen: open a file, or start from the sample or a blank map. */
+.start {
+  max-width: 560px;
+  margin: 48px auto;
+}
+.start .dropzone {
+  max-width: none;
+  margin: 0 0 16px;
+}
+.start-options {
+  display: flex;
+  gap: 12px;
+}
+:where(button).start-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  text-align: left;
+  border-radius: 12px;
+}
+:where(button).start-option:hover {
+  border-color: var(--activity);
+}
+.start-option strong {
+  color: var(--activity);
+}
+.start-option span,
+.start-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+.start-note {
+  text-align: center;
+}
+.by-ekinox {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.by-ekinox a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+.by-ekinox a:hover {
+  color: var(--ekinox);
+}
+.by-ekinox img {
+  border-radius: 4px;
+}

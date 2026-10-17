@@ -6,8 +6,10 @@
 //   read()                    { text, version }
 //   write(text, expected)     saves text, refusing with WriteConflictError when the stored
 //                             version is no longer `expected`; returns the new version
+//   inMemory                  true when the map only lives in the page (sample, blank) until
+//                             it is saved to a file
 //
-// The browser's open dialog is wrapped here too (openFileHandle).
+// The browser's file dialogs are wrapped here too (openFileHandle, saveAsNewFile).
 // Adding a backend (local server, Git, …) means adding a function here, not changing the app.
 
 // What the browser can do with files. Chromium browsers (Chrome, Edge) implement the File
@@ -18,7 +20,12 @@ export function canOpenFilesInPlace() {
   return typeof window.showOpenFilePicker === "function";
 }
 
-/** The file type offered by the browser's open dialog. */
+/** Whether a new file can be created and then edited in place ("Save as…"). */
+export function canSaveAsNewFile() {
+  return typeof window.showSaveFilePicker === "function";
+}
+
+/** The file type offered by the browser's open and save dialogs. */
 const STORY_MAP_FILE_TYPES = [
   { description: "Story map", accept: { "text/yaml": [".yml", ".yaml"] } },
 ];
@@ -76,6 +83,23 @@ export function fileCopySource(file) {
   };
 }
 
+/**
+ * A story map that only lives in the page (the sample, or a blank map) until it is saved to
+ * a file: read from `text`, never written.
+ */
+export function memorySource(name, text) {
+  return {
+    name,
+    writable: false,
+    inMemory: true,
+    version: async () => 0,
+    read: async () => ({ text, version: 0 }),
+    async write() {
+      throw new Error("this story map is not saved to a file yet.");
+    },
+  };
+}
+
 /** Replaces the whole content of the file behind `handle` with `text`. */
 async function writeText(handle, text) {
   const writable = await handle.createWritable();
@@ -95,6 +119,25 @@ export async function openFileHandle() {
     if (e.name === "AbortError") return null;
     throw e;
   }
+}
+
+/**
+ * Saves `text` to a new file the user chooses (Chrome, Edge) and returns a source for it, so
+ * the map is then edited in that file. Null when the user cancels.
+ */
+export async function saveAsNewFile(suggestedName, text) {
+  let handle;
+  try {
+    handle = await window.showSaveFilePicker({
+      suggestedName,
+      types: STORY_MAP_FILE_TYPES,
+    });
+  } catch (e) {
+    if (e.name === "AbortError") return null;
+    throw e;
+  }
+  await writeText(handle, text);
+  return fileHandleSource(handle);
 }
 
 /** Whether the file picker returned a FileSystemFileHandle of a file (not a folder). */

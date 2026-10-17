@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { checkReferences } from "./domain/storyMap.js";
-import { sourceFor } from "./storage/sources.js";
+import { memorySource, sourceFor } from "./storage/sources.js";
+import { STARTING_POINTS } from "./startingPoints.js";
 import useStoryMapFile from "./useStoryMapFile.js";
 import { dialogFor, EDIT_KIND } from "./editTargets.js";
-import FilePicker from "./components/FilePicker.jsx";
+import FileBar from "./components/FileBar.jsx";
+import StartScreen from "./components/StartScreen.jsx";
 import EditDialog from "./components/EditDialog.jsx";
 import StoryMap from "./components/StoryMap.jsx";
 
@@ -12,6 +14,7 @@ export default function App({ pollIntervalMs }) {
   const [source, setSource] = useState(null);
   const [editing, setEditing] = useState(null);
   const {
+    doc,
     storyMap: loadedMap,
     loadError,
     saveError,
@@ -19,6 +22,7 @@ export default function App({ pollIntervalMs }) {
     unsaved,
     applyAndSave,
     move,
+    saveAs,
     downloadCopy,
   } = useStoryMapFile(source, { pollIntervalMs });
   // The hook drops the previous map only after a render: never show it once its file is closed.
@@ -65,20 +69,21 @@ export default function App({ pollIntervalMs }) {
           )}
         </h1>
         {storyMap && (
-          <span className="meta">
-            {source.name}
-            {storyMap.last_updated && ` · updated ${storyMap.last_updated}`}
-            {source.writable
-              ? " · saved to file, watching for changes"
-              : unsaved && " · unsaved changes"}
-          </span>
+          <FileBar
+            name={source.name}
+            lastUpdated={storyMap.last_updated}
+            writable={source.writable}
+            inMemory={source.inMemory}
+            unsaved={unsaved}
+            revision={doc}
+            onSaveAs={async () => {
+              const saved = await saveAs();
+              if (saved) setSource(saved);
+            }}
+            onDownload={downloadCopy}
+            onClose={() => setSource(null)}
+          />
         )}
-        {storyMap && !source.writable && (
-          <button className={unsaved ? "primary" : ""} onClick={downloadCopy}>
-            Download YAML
-          </button>
-        )}
-        {storyMap && <button onClick={() => setSource(null)}>Open another file</button>}
       </header>
       <main>
         {saveError && <div className="error">{saveError}</div>}
@@ -97,7 +102,12 @@ export default function App({ pollIntervalMs }) {
         {storyMap ? (
           <StoryMap storyMap={storyMap} onEdit={setEditing} onMove={move} />
         ) : (
-          <FilePicker onPick={(picked) => setSource(sourceFor(picked))} />
+          <StartScreen
+            onPick={(picked) => setSource(sourceFor(picked))}
+            onStart={(kind) =>
+              setSource(memorySource(STARTING_POINTS[kind].name, STARTING_POINTS[kind].text))
+            }
+          />
         )}
       </main>
       {dialog && (

@@ -13,6 +13,17 @@ export function parseStoryMap(text) {
   return doc;
 }
 
+/** YAML text of a new, empty story map, linked to the schema like the sample. */
+export function blankStoryMap(title = "New story map") {
+  return [
+    "# yaml-language-server: $schema=./story-map.schema.json",
+    `title: ${JSON.stringify(title)}`,
+    "releases: []",
+    "activities: []",
+    "",
+  ].join("\n");
+}
+
 /** YAML text for a Document. lineWidth 0 never folds long values, which keeps diffs small. */
 export function serialize(doc) {
   return doc.toString({ lineWidth: 0 });
