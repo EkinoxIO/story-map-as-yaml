@@ -144,6 +144,9 @@ button.add:hover {
   border-color: #fff;
 }
 .task {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 8px 12px;
   background: var(--task);
   font-weight: 500;
@@ -156,6 +159,9 @@ button.add:hover {
   font-weight: normal;
 }
 .release {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
   grid-column: 1 / -1;
   position: sticky;
   left: 0;
@@ -268,4 +274,28 @@ dialog .actions .spacer {
 .warning ul {
   margin: 6px 0 0;
   padding-left: 20px;
+}
+
+/* Fold / unfold toggle on releases, activities and tasks. */
+button.fold {
+  flex: none;
+  width: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+/* Under a folded task: stories show only their id, with the status border. */
+.story.compact {
+  padding: 4px 8px;
+}
+/* Under a folded activity: one empty block per task, to show how many there are. */
+.task.placeholder {
+  padding: 8px;
+}
+.task.placeholder:hover {
+  outline: none;
 }
