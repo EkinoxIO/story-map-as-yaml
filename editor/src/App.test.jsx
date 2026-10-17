@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import "./test/dialogPolyfill.js";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import App from "./App.jsx";
+import { fakeFileHandle } from "./test/fakeFileHandle.js";
 
 const YAML = `title: "Bookstore"
 releases:
@@ -20,44 +22,25 @@ activities:
             status: "Backlog"
 `;
 
-// In-memory stand-in for a FileSystemFileHandle, as returned by the browser's file picker.
-const disk = { text: YAML, lastModified: 1 };
-const handle = {
-  kind: "file",
-  name: "bookstore.yml",
-  getFile: async () => new File([disk.text], "bookstore.yml", { lastModified: disk.lastModified }),
-  queryPermission: async () => "granted",
-  requestPermission: async () => "granted",
-  createWritable: async () => {
-    let buffer = "";
-    return {
-      write: async (chunk) => {
-        buffer += chunk;
-      },
-      close: async () => {
-        disk.text = buffer;
-        disk.lastModified += 1;
-      },
-    };
-  },
-};
+const { handle, disk } = fakeFileHandle(YAML, { name: "bookstore.yml" });
 
 function changeOnDisk(text) {
   disk.text = text;
   disk.lastModified += 10;
 }
 
-let App;
-beforeAll(async () => {
+beforeEach(() => {
   // A browser that hands out file handles (Chrome, Edge), as the file picker checks.
   window.showOpenFilePicker = async () => [handle];
-  App = (await import("./App.jsx")).default;
 });
 
 afterEach(() => {
   cleanup();
   disk.text = YAML;
   disk.lastModified = 1;
+  // Removed here, not at the end of a test, so a failed test does not leak them to the next.
+  delete window.showOpenFilePicker;
+  delete window.showSaveFilePicker;
 });
 
 async function openFile() {
@@ -84,33 +67,20 @@ describe("starting without a file", () => {
   });
 
   it("saves the map to a new file, then edits it there", async () => {
-    let written = null;
-    const newFile = {
-      kind: "file",
-      name: "my_map.yml",
-      getFile: async () => new File([written ?? ""], "my_map.yml", { lastModified: 5 }),
-      queryPermission: async () => "granted",
-      requestPermission: async () => "granted",
-      createWritable: async () => ({
-        write: async (text) => {
-          written = text;
-        },
-        close: async () => {},
-      }),
-    };
-    window.showSaveFilePicker = async () => newFile;
+    const newFile = fakeFileHandle("", { name: "my_map.yml" });
+    window.showSaveFilePicker = async () => newFile.handle;
     render(<App pollIntervalMs={20} />);
     fireEvent.click(screen.getByRole("button", { name: /Start blank/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Save as…" }));
     expect(await screen.findByText(/saved to file, watching for changes/)).toBeTruthy();
-    expect(written).toContain('title: "New story map"');
+    expect(newFile.disk.text).toContain('title: "New story map"');
     expect(screen.getByText(/my_map\.yml/)).toBeTruthy();
-    delete window.showSaveFilePicker;
   });
 
   it("asks before closing a map that is not saved, then goes back to the start", async () => {
     render(<App pollIntervalMs={20} />);
     fireEvent.click(screen.getByRole("button", { name: /Start blank/ }));
+    // Close shows in the file bar, which appears once the map is loaded.
     fireEvent.click(await screen.findByRole("button", { name: "Close" }));
     expect(screen.getByRole("button", { name: "Discard unsaved changes?" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Discard unsaved changes?" }));

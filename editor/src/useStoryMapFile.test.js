@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { moveRelease, setMapTitle, StoryMapError } from "./domain/storyMap.js";
 import { WriteConflictError } from "./storage/sources.js";
 import useStoryMapFile from "./useStoryMapFile.js";
+
+// Removed after each test, not at its end, so a failed test does not leak it to the next.
+afterEach(() => {
+  delete window.showSaveFilePicker;
+});
 
 // Poll fast so tests that wait for a reload do not depend on wall-clock margins.
 const options = { pollIntervalMs: 20 };
@@ -13,9 +18,10 @@ releases: []
 activities: []
 `;
 
-// In-memory source following the storage/sources.js interface. `holdWrites()` makes writes
+// In-memory source following the storage/sources.js interface, writable unless told otherwise
+// (unlike the real memorySource, which never is). `holdWrites()` makes writes
 // wait until `releaseWrites()`, to simulate a slow save (e.g. a permission prompt).
-function memorySource(text, { writable = true } = {}) {
+function fakeSource(text, { writable = true } = {}) {
   const stored = { text, version: 1 };
   let gate = null;
   const source = {
@@ -60,25 +66,25 @@ const rename = (title) => (doc) => setMapTitle(doc, title);
 
 describe("useStoryMapFile", () => {
   it("loads the story map from the source", async () => {
-    const { result } = await load(memorySource(YAML));
+    const { result } = await load(fakeSource(YAML));
     expect(result.current.storyMap.title).toBe("Map");
     expect(result.current.loadError).toBeNull();
   });
 
   it("reports a file that is not a story map", async () => {
-    const { result } = renderHook(() => useStoryMapFile(memorySource("title: x\n"), options));
+    const { result } = renderHook(() => useStoryMapFile(fakeSource("title: x\n"), options));
     await waitFor(() => expect(result.current.loadError).toMatch(/is it a story map/));
   });
 
   it("reloads when the stored file changes", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     source.changeOnDisk(YAML.replace('"Map"', '"Changed"'));
     await waitFor(() => expect(result.current.storyMap.title).toBe("Changed"));
   });
 
   it("keeps the last valid map while the file is invalid", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     source.changeOnDisk("title: [unclosed");
     await waitFor(() => expect(result.current.loadError).not.toBeNull());
@@ -86,7 +92,7 @@ describe("useStoryMapFile", () => {
   });
 
   it("saves an edit to the source", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     act(() => result.current.applyAndSave(rename("Saved")));
     expect(result.current.storyMap.title).toBe("Saved");
@@ -96,7 +102,7 @@ describe("useStoryMapFile", () => {
   });
 
   it("refuses a rule violation before anything is written", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     expect(() => result.current.applyAndSave(rename(""))).toThrow(StoryMapError);
     expect(result.current.storyMap.title).toBe("Map");
@@ -104,7 +110,7 @@ describe("useStoryMapFile", () => {
   });
 
   it("does not overwrite a file changed on disk since it was loaded", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     source.changeOnDisk(YAML.replace('"Map"', '"Outside"'));
     act(() => result.current.applyAndSave(rename("Mine")));
@@ -114,7 +120,7 @@ describe("useStoryMapFile", () => {
   });
 
   it("saves two quick edits in order while the first save is still pending", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     source.holdWrites();
     act(() => result.current.applyAndSave(rename("First")));
@@ -126,7 +132,7 @@ describe("useStoryMapFile", () => {
   });
 
   it("reports a move that breaks a rule, and forgets it when the file reloads", async () => {
-    const source = memorySource(YAML);
+    const source = fakeSource(YAML);
     const { result } = await load(source);
     act(() => result.current.move((doc) => moveRelease(doc, "nope", null)));
     expect(result.current.moveError).toMatch(/Not moved: There is no release/);
@@ -137,12 +143,12 @@ describe("useStoryMapFile", () => {
   });
 
   it("forgets a move error when another file is opened", async () => {
-    let source = memorySource(YAML);
+    let source = fakeSource(YAML);
     const { result, rerender } = renderHook(() => useStoryMapFile(source, options));
     await waitFor(() => expect(result.current.storyMap).not.toBeNull());
     act(() => result.current.move((doc) => moveRelease(doc, "nope", null)));
     expect(result.current.moveError).not.toBeNull();
-    source = memorySource(YAML.replace('"Map"', '"Other"'));
+    source = fakeSource(YAML.replace('"Map"', '"Other"'));
     rerender();
     await waitFor(() => expect(result.current.storyMap?.title).toBe("Other"));
     expect(result.current.moveError).toBeNull();
@@ -152,18 +158,17 @@ describe("useStoryMapFile", () => {
     window.showSaveFilePicker = async () => {
       throw new Error("disk full");
     };
-    const { result } = await load(memorySource(YAML, { writable: false }));
+    const { result } = await load(fakeSource(YAML, { writable: false }));
     let saved;
     await act(async () => {
       saved = await result.current.saveAs();
     });
     expect(saved).toBeNull();
     expect(result.current.saveError).toBe("Not saved: disk full");
-    delete window.showSaveFilePicker;
   });
 
   it("only marks edits as unsaved when the source cannot be written", async () => {
-    const source = memorySource(YAML, { writable: false });
+    const source = fakeSource(YAML, { writable: false });
     const { result } = await load(source);
     act(() => result.current.applyAndSave(rename("Local")));
     expect(result.current.unsaved).toBe(true);

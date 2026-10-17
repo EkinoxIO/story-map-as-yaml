@@ -1,22 +1,21 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeFileHandle } from "../test/fakeFileHandle.js";
+import FilePicker from "./FilePicker.jsx";
 
-const fileHandle = {
-  kind: "file",
-  name: "map.yml",
-  getFile: async () => new File([""], "map.yml"),
-};
+const { handle: fileHandle } = fakeFileHandle("");
 const folderHandle = { kind: "directory", name: "maps" };
 
-let FilePicker;
-beforeAll(async () => {
+beforeEach(() => {
   // A browser that hands out file handles (Chrome, Edge), as the file picker checks.
   window.showOpenFilePicker = async () => [fileHandle];
-  FilePicker = (await import("./FilePicker.jsx")).default;
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  delete window.showOpenFilePicker;
+});
 
 // A drop whose single item resolves to `handle` (or fails with `error`).
 function dropItem({ handle, error, kind = "file" }) {
