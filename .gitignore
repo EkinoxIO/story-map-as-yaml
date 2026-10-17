@@ -1,0 +1,7 @@
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+
+# Local code audit reports
+audit/

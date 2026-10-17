@@ -1,0 +1,167 @@
+# yaml-language-server: $schema=./story-map.schema.json
+title: "Online Bookstore Story Map"
+last_updated: "2026-10-17T10:00:00Z"
+releases:
+  - id: "MVP"
+    title: "Walking Skeleton"
+    goal: "Let a visitor find a book, pay for it by card and receive a confirmation, end to end, with the simplest possible version of every step."
+  - id: "v1.1"
+    title: "Returning Customers"
+    goal: "Make customers come back: accounts, order history and faster checkout for people who already bought once."
+  - id: "v2.0"
+    title: "Grow the Basket"
+    goal: "Increase average order value through recommendations, wish lists and promotions."
+activities:
+  - id: act_1
+    title: "Discover Books"
+    tasks:
+      - id: task_1
+        title: "Browse Catalog"
+        stories:
+          - id: US-101
+            title: "List books by category"
+            release: "MVP"
+            status: "Done"
+          - id: US-102
+            title: "Show new releases on the home page"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-103
+            title: "Personalised recommendations"
+            release: "v2.0"
+            status: "Backlog"
+      - id: task_2
+        title: "Search"
+        stories:
+          - id: US-104
+            title: "Search by title or author"
+            release: "MVP"
+            status: "Done"
+          - id: US-105
+            title: "Filter results by price and format"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-106
+            title: "Autocomplete search suggestions"
+            release: "v2.0"
+            status: "Backlog"
+      - id: task_3
+        title: "View Book Details"
+        stories:
+          - id: US-107
+            title: "Show cover, summary and price"
+            release: "MVP"
+            status: "Done"
+          - id: US-108
+            title: "Show customer reviews and ratings"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-109
+            title: "Preview the first pages"
+            release: "v2.0"
+            status: "Backlog"
+  - id: act_2
+    title: "Buy Books"
+    tasks:
+      - id: task_4
+        title: "Manage Cart"
+        stories:
+          - id: US-201
+            title: "Add a book to the cart"
+            release: "MVP"
+            status: "In Progress"
+          - id: US-202
+            title: "Change quantity or remove a book"
+            release: "MVP"
+            status: "In Progress"
+          - id: US-203
+            title: "Save the cart for later"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-204
+            title: "Add a book to a wish list"
+            release: "v2.0"
+            status: "Backlog"
+      - id: task_5
+        title: "Checkout"
+        stories:
+          - id: US-205
+            title: "Checkout as a guest with a shipping address"
+            release: "MVP"
+            status: "In Progress"
+          - id: US-206
+            title: "Reuse saved addresses"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-207
+            title: "Apply a promo code"
+            release: "v2.0"
+            status: "Backlog"
+      - id: task_6
+        title: "Pay"
+        stories:
+          - id: US-208
+            title: "Pay by credit card"
+            release: "MVP"
+            status: "In Review"
+          - id: US-209
+            title: "Pay with PayPal"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-210
+            title: "Pay with a gift card"
+            release: "v2.0"
+            status: "Backlog"
+  - id: act_3
+    title: "Manage Account"
+    tasks:
+      - id: task_7
+        title: "Account Creation"
+        stories:
+          - id: US-301
+            title: "Sign up via Email"
+            release: "v1.1"
+            status: "In Progress"
+          - id: US-302
+            title: "OAuth Google Login"
+            release: "v1.1"
+            status: "Backlog"
+      - id: task_8
+        title: "Order History"
+        stories:
+          - id: US-303
+            title: "List past orders"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-304
+            title: "Reorder a past order in one click"
+            release: "v2.0"
+            status: "Backlog"
+  - id: act_4
+    title: "Receive Order"
+    tasks:
+      - id: task_9
+        title: "Get Confirmation"
+        stories:
+          - id: US-401
+            title: "Send an order confirmation email"
+            release: "MVP"
+            status: "Backlog"
+      - id: task_10
+        title: "Track Delivery"
+        stories:
+          - id: US-402
+            title: "Show shipping status on the order page"
+            release: "v1.1"
+            status: "Backlog"
+          - id: US-403
+            title: "Notify the customer when the parcel ships"
+            release: "v2.0"
+            status: "Backlog"
+      - id: task_11
+        title: "Return a Book"
+        stories:
+          - id: US-404
+            title: "Request a return from the order page"
+            release: "v2.0"
+            status: "Backlog"
