@@ -1,60 +1,46 @@
-import { describe, expect, it } from "vitest";
 // @vitest-environment jsdom
+import { afterEach, describe, expect, it } from "vitest";
+import { fakeFileHandle } from "../test/fakeFileHandle.js";
 import {
+  STORY_MAP_ACCEPT,
   canOpenFilesInPlace,
   canSaveAsNewFile,
   fileHandleSource,
   fileCopySource,
   memorySource,
+  openFileHandle,
+  saveAsNewFile,
   sourceFor,
   WriteConflictError,
 } from "./sources.js";
 
-// In-memory stand-in for a FileSystemFileHandle.
-function fakeHandle(text, { permission = "granted" } = {}) {
-  const disk = { text, lastModified: 1 };
-  const handle = {
-    name: "map.yml",
-    getFile: async () => new File([disk.text], "map.yml", { lastModified: disk.lastModified }),
-    queryPermission: async () => permission,
-    requestPermission: async () => permission,
-    createWritable: async () => {
-      let buffer = "";
-      return {
-        write: async (chunk) => {
-          buffer += chunk;
-        },
-        close: async () => {
-          disk.text = buffer;
-          disk.lastModified += 1;
-        },
-      };
-    },
-  };
-  return { handle, disk };
-}
+// Browser APIs stubbed by a test are removed after it, even when it fails.
+afterEach(() => {
+  delete window.showOpenFilePicker;
+  delete window.showSaveFilePicker;
+});
 
 describe("fileHandleSource", () => {
   it("reads the text with its version", async () => {
-    const { handle } = fakeHandle("title: x\n");
+    const { handle } = fakeFileHandle("title: x\n");
     expect(await fileHandleSource(handle).read()).toEqual({ text: "title: x\n", version: 1 });
   });
 
   it("writes in place and returns the new version", async () => {
-    const { handle, disk } = fakeHandle("old");
+    const { handle, disk } = fakeFileHandle("old");
     expect(await fileHandleSource(handle).write("new", 1)).toBe(2);
     expect(disk.text).toBe("new");
   });
 
   it("refuses to overwrite a file changed since it was read", async () => {
-    const { handle, disk } = fakeHandle("old");
+    const { handle, disk } = fakeFileHandle("old");
     disk.lastModified = 5;
     await expect(fileHandleSource(handle).write("new", 1)).rejects.toThrow(WriteConflictError);
     expect(disk.text).toBe("old");
   });
 
   it("refuses to write without permission", async () => {
-    const { handle, disk } = fakeHandle("old", { permission: "denied" });
+    const { handle, disk } = fakeFileHandle("old", { permission: "denied" });
     await expect(fileHandleSource(handle).write("new", 1)).rejects.toThrow(/not allowed/);
     expect(disk.text).toBe("old");
   });
@@ -71,7 +57,7 @@ describe("fileCopySource", () => {
 
 describe("sourceFor", () => {
   it("picks the adapter from what the file picker returned", () => {
-    expect(sourceFor(fakeHandle("").handle).writable).toBe(true);
+    expect(sourceFor(fakeFileHandle("").handle).writable).toBe(true);
     expect(sourceFor(new File([""], "map.yml")).writable).toBe(false);
   });
 });
@@ -87,14 +73,37 @@ describe("memorySource", () => {
 
 describe("browser capabilities", () => {
   it("follow the File System Access API being there", () => {
-    const saved = { open: window.showOpenFilePicker, save: window.showSaveFilePicker };
-    window.showOpenFilePicker = undefined;
-    window.showSaveFilePicker = undefined;
     expect([canOpenFilesInPlace(), canSaveAsNewFile()]).toEqual([false, false]);
     window.showOpenFilePicker = async () => [];
     window.showSaveFilePicker = async () => ({});
     expect([canOpenFilesInPlace(), canSaveAsNewFile()]).toEqual([true, true]);
-    window.showOpenFilePicker = saved.open;
-    window.showSaveFilePicker = saved.save;
+  });
+});
+
+describe("file dialogs", () => {
+  const cancelled = async () => {
+    throw new DOMException("cancelled", "AbortError");
+  };
+
+  it("open a chosen file, or nothing when cancelled", async () => {
+    const { handle } = fakeFileHandle("");
+    window.showOpenFilePicker = async () => [handle];
+    expect(await openFileHandle()).toBe(handle);
+    window.showOpenFilePicker = cancelled;
+    expect(await openFileHandle()).toBeNull();
+  });
+
+  it("save a new file and edit it there, or nothing when cancelled", async () => {
+    const { handle, disk } = fakeFileHandle("");
+    window.showSaveFilePicker = async () => handle;
+    const source = await saveAsNewFile("map.yml", "title: x\n");
+    expect(disk.text).toBe("title: x\n");
+    expect(source.writable).toBe(true);
+    window.showSaveFilePicker = cancelled;
+    expect(await saveAsNewFile("map.yml", "")).toBeNull();
+  });
+
+  it("accept the same extensions in the file input as in the dialogs", () => {
+    expect(STORY_MAP_ACCEPT).toBe(".yml,.yaml");
   });
 });

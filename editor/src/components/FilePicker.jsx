@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { STORY_MAP_FILE_TYPES, canOpenFilesInPlace } from "../storage/sources.js";
+import {
+  STORY_MAP_ACCEPT,
+  canOpenFilesInPlace,
+  isFileHandle,
+  openFileHandle,
+} from "../storage/sources.js";
 
 const WATCH_HINT =
   "Edits are saved to the file, and the map refreshes whenever the file changes on disk.";
@@ -9,15 +14,15 @@ const COPY_HINT =
 const NOT_A_FILE = "Drop or pick a single YAML file, not a folder.";
 
 // Calls onPick with a FileSystemFileHandle when the file can be watched, a File otherwise.
-// Anything else (a folder, an empty drop, a cancelled choice) is refused with a message.
+// Anything else (a folder, an empty drop) is refused with a message; a cancelled choice does
+// nothing.
 export default function FilePicker({ onPick }) {
   const [dragging, setDragging] = useState(false);
   const [problem, setProblem] = useState(null);
   const canOpenInPlace = canOpenFilesInPlace();
 
   function pick(picked) {
-    const isFileHandle = picked?.kind === "file" && typeof picked.getFile === "function";
-    if (isFileHandle || picked instanceof File) {
+    if (isFileHandle(picked) || picked instanceof File) {
       setProblem(null);
       onPick(picked);
     } else {
@@ -27,12 +32,10 @@ export default function FilePicker({ onPick }) {
 
   async function pickWithHandle() {
     try {
-      const [handle] = await window.showOpenFilePicker({
-        types: STORY_MAP_FILE_TYPES,
-      });
-      pick(handle);
+      const handle = await openFileHandle();
+      if (handle) pick(handle);
     } catch (e) {
-      if (e.name !== "AbortError") setProblem(`Could not open the file: ${e.message}`);
+      setProblem(`Could not open the file: ${e.message}`);
     }
   }
 
@@ -71,7 +74,7 @@ export default function FilePicker({ onPick }) {
       ) : (
         <input
           type="file"
-          accept=".yml,.yaml"
+          accept={STORY_MAP_ACCEPT}
           onChange={(e) => e.target.files[0] && pick(e.target.files[0])}
         />
       )}
