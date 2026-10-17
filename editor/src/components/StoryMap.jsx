@@ -1,8 +1,11 @@
 import { Fragment } from "react";
+import { ITEM_KIND } from "../domain/storyMap.js";
 import { EDIT_KIND } from "../editTargets.js";
 import { UNASSIGNED, buildLayout, columnWidth } from "../mapLayout.js";
 import { statusColor } from "../statusColors.js";
 import useFolding from "../useFolding.js";
+import useMapInteractions from "../useMapInteractions.js";
+import Clickable from "./Clickable.jsx";
 
 function FoldToggle({ folded, label, onToggle }) {
   return (
@@ -21,26 +24,35 @@ function FoldToggle({ folded, label, onToggle }) {
 
 // A compact card (under a folded task) shows only the story id and, through its left border
 // color, its status: how many stories and how far along, not what they are.
-function StoryCard({ story, compact, onClick }) {
+function StoryCard({ story, compact, onActivate, itemProps }) {
   const style = { "--status-color": statusColor(story.status) };
   if (compact) {
     return (
-      <button className="block story compact" style={style} title={story.id} onClick={onClick}>
+      <Clickable
+        className="story compact"
+        style={style}
+        title={story.id}
+        onActivate={onActivate}
+        {...itemProps}
+      >
         <div className="id">{story.id}</div>
-      </button>
+      </Clickable>
     );
   }
   return (
-    <button className="block story" style={style} onClick={onClick}>
+    <Clickable className="story" style={style} onActivate={onActivate} {...itemProps}>
       <div className="id">{story.id}</div>
       <div>{story.title}</div>
       <div className="tags">{story.status && <span className="tag">{story.status}</span>}</div>
-    </button>
+    </Clickable>
   );
 }
 
+// Headers and bands are dragged by their title; `data-drag-image` makes the browser show the
+// whole header or band, background included, while it is dragged (see useDragAndDrop).
+
 // A folded release keeps its title and id; its goal and stories are hidden.
-function ReleaseBand({ release, folded, onToggle, onEdit }) {
+function ReleaseBand({ release, folded, onToggle, onEdit, rootProps, itemProps }) {
   const toggle = (
     <FoldToggle folded={folded} label={`release ${release.title}`} onToggle={onToggle} />
   );
@@ -56,34 +68,36 @@ function ReleaseBand({ release, folded, onToggle, onEdit }) {
     );
   }
   return (
-    <div className="release">
+    <div className="release" data-drag-image {...rootProps}>
       {toggle}
-      <button
-        className="block title"
-        onClick={() =>
+      <Clickable
+        className="title"
+        onActivate={() =>
           onEdit({ kind: EDIT_KIND.RELEASE, releaseIndex: release.releaseIndex, id: release.id })
         }
+        {...itemProps}
       >
         <strong>{release.title}</strong>
         <span className="tag">{release.id}</span>
         {!folded && <div className="goal">{release.goal}</div>}
-      </button>
+      </Clickable>
     </div>
   );
 }
 
-function Cell({ column, release, stories, onEdit }) {
+function Cell({ column, release, stories, onEdit, rootProps, storyProps }) {
   // Nothing shows under a folded activity.
   if (column.activityFolded) return <div className="cell" />;
   const { activityIndex, taskIndex, taskFolded } = column;
   return (
-    <div className="cell">
+    <div className="cell" {...rootProps}>
       {stories.map(({ story, storyIndex }) => (
         <StoryCard
           key={story.id ?? storyIndex}
           story={story}
           compact={taskFolded}
-          onClick={() =>
+          itemProps={storyProps(story)}
+          onActivate={() =>
             onEdit({ kind: EDIT_KIND.STORY, activityIndex, taskIndex, storyIndex, id: story.id })
           }
         />
@@ -110,16 +124,17 @@ function Cell({ column, release, stories, onEdit }) {
 
 // A folded activity keeps its title over one narrow, empty column per task.
 function ActivityHeader(props) {
-  const { activity, activityIndex, span, folded, onToggle, onEdit } = props;
+  const { activity, activityIndex, span, folded, onToggle, onEdit, rootProps, itemProps } = props;
   return (
-    <div className="activity" style={{ gridColumn: `span ${span}` }}>
+    <div className="activity" data-drag-image style={{ gridColumn: `span ${span}` }} {...rootProps}>
       <FoldToggle folded={folded} label={`activity ${activity.title}`} onToggle={onToggle} />
-      <button
-        className="block title"
-        onClick={() => onEdit({ kind: EDIT_KIND.ACTIVITY, activityIndex, id: activity.id })}
+      <Clickable
+        className="title"
+        onActivate={() => onEdit({ kind: EDIT_KIND.ACTIVITY, activityIndex, id: activity.id })}
+        {...itemProps}
       >
         {activity.title}
-      </button>
+      </Clickable>
       {!folded && (
         <button
           className="add"
@@ -136,29 +151,38 @@ function ActivityHeader(props) {
 // A folded task keeps its title, in a column only as wide as needed; its stories show
 // only their id. Under a folded activity, each task is an empty block: the number of tasks
 // stays visible, not their titles.
-function TaskHeader({ column, onToggle, onEdit }) {
+function TaskHeader({ column, onToggle, onEdit, rootProps, itemProps }) {
   const { activityIndex, taskIndex, task } = column;
   if (column.activityFolded) return <div className="task placeholder" aria-hidden="true" />;
   if (!task) {
-    return <div className="task empty">No task yet</div>;
+    return (
+      <div className="task empty" {...rootProps}>
+        No task yet
+      </div>
+    );
   }
   return (
-    <div className="task">
+    <div className="task" data-drag-image {...rootProps}>
       <FoldToggle folded={column.taskFolded} label={`task ${task.title}`} onToggle={onToggle} />
-      <button
-        className="block title"
-        onClick={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, taskIndex, id: task.id })}
+      <Clickable
+        className="title"
+        onActivate={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, taskIndex, id: task.id })}
+        {...itemProps}
       >
         {task.title}
-      </button>
+      </Clickable>
     </div>
   );
 }
 
-export default function StoryMap({ storyMap, onEdit }) {
+export default function StoryMap({ storyMap, onEdit, onMove }) {
   const { isFolded, toggle } = useFolding();
   const layout = buildLayout(storyMap, isFolded);
   const { activities, columns, rows, storiesIn } = layout;
+  const { movable, releaseDrop, activityDrop, taskDrop, cellDrop, storyProps } = useMapInteractions(
+    layout,
+    onMove,
+  );
 
   return (
     <>
@@ -169,6 +193,7 @@ export default function StoryMap({ storyMap, onEdit }) {
         <button className="add" onClick={() => onEdit({ kind: EDIT_KIND.RELEASE })}>
           + Release
         </button>
+        <span className="hint">Drag to reorder.</span>
       </div>
       {columns.length === 0 && <p>This story map is empty: add an activity to start.</p>}
       {columns.length > 0 && (
@@ -183,6 +208,8 @@ export default function StoryMap({ storyMap, onEdit }) {
                 folded={activity.folded}
                 onToggle={() => toggle(activity.foldKey)}
                 onEdit={onEdit}
+                rootProps={activityDrop(activity)}
+                itemProps={movable({ kind: ITEM_KIND.ACTIVITY, id: activity.id })}
               />
             ))}
             {columns.map((column) => (
@@ -191,6 +218,10 @@ export default function StoryMap({ storyMap, onEdit }) {
                 column={column}
                 onToggle={column.foldKey && (() => toggle(column.foldKey))}
                 onEdit={onEdit}
+                rootProps={taskDrop(column)}
+                itemProps={
+                  column.task && movable({ kind: ITEM_KIND.TASK, id: column.task.id, column })
+                }
               />
             ))}
             {rows.map((row) => {
@@ -205,6 +236,8 @@ export default function StoryMap({ storyMap, onEdit }) {
                     folded={folded}
                     onToggle={() => toggle(key)}
                     onEdit={onEdit}
+                    rootProps={releaseDrop(row)}
+                    itemProps={movable({ kind: ITEM_KIND.RELEASE, id: row.id })}
                   />
                   {!folded &&
                     columns.map((column) => {
@@ -216,6 +249,8 @@ export default function StoryMap({ storyMap, onEdit }) {
                           release={row}
                           stories={cellStories}
                           onEdit={onEdit}
+                          rootProps={cellDrop(column, row)}
+                          storyProps={storyProps(column, row)}
                         />
                       );
                     })}

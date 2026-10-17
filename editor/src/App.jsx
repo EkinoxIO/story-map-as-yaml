@@ -15,8 +15,10 @@ export default function App({ pollIntervalMs }) {
     storyMap: loadedMap,
     loadError,
     saveError,
+    moveError,
     unsaved,
     applyAndSave,
+    move,
     downloadCopy,
   } = useStoryMapFile(source, { pollIntervalMs });
   // The hook drops the previous map only after a render: never show it once its file is closed.
@@ -31,7 +33,7 @@ export default function App({ pollIntervalMs }) {
   const problems = storyMap ? checkReferences(storyMap) : [];
 
   // While a map is open, a file dragged in from outside the page is ignored: the browser
-  // would otherwise open it in place of the editor.
+  // would otherwise open it in place of the editor. Drags inside the map carry no files.
   const mapOpen = Boolean(storyMap);
   useEffect(() => {
     if (!mapOpen) return;
@@ -80,6 +82,7 @@ export default function App({ pollIntervalMs }) {
       </header>
       <main>
         {saveError && <div className="error">{saveError}</div>}
+        {moveError && <div className="error">{moveError}</div>}
         {loadError && <div className="error">{loadError}</div>}
         {problems.length > 0 && (
           <div className="warning">
@@ -92,7 +95,7 @@ export default function App({ pollIntervalMs }) {
           </div>
         )}
         {storyMap ? (
-          <StoryMap storyMap={storyMap} onEdit={setEditing} />
+          <StoryMap storyMap={storyMap} onEdit={setEditing} onMove={move} />
         ) : (
           <FilePicker onPick={(picked) => setSource(sourceFor(picked))} />
         )}

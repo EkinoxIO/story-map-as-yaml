@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { setMapTitle, StoryMapError } from "./domain/storyMap.js";
+import { moveRelease, setMapTitle, StoryMapError } from "./domain/storyMap.js";
 import { WriteConflictError } from "./storage/sources.js";
 import useStoryMapFile from "./useStoryMapFile.js";
 
@@ -124,6 +124,29 @@ describe("useStoryMapFile", () => {
     await waitFor(() => expect(source.writes).toBe(2));
     expect(source.stored.text).toContain('title: "Second"');
     expect(result.current.saveError).toBeNull();
+  });
+
+  it("reports a move that breaks a rule, and forgets it when the file reloads", async () => {
+    const source = fakeSource(YAML);
+    const { result } = await load(source);
+    act(() => result.current.move((doc) => moveRelease(doc, "nope", null)));
+    expect(result.current.moveError).toMatch(/Not moved: There is no release/);
+    expect(source.writes).toBe(0);
+    source.changeOnDisk(YAML.replace('"Map"', '"Reloaded"'));
+    await waitFor(() => expect(result.current.storyMap.title).toBe("Reloaded"));
+    expect(result.current.moveError).toBeNull();
+  });
+
+  it("forgets a move error when another file is opened", async () => {
+    let source = fakeSource(YAML);
+    const { result, rerender } = renderHook(() => useStoryMapFile(source, options));
+    await waitFor(() => expect(result.current.storyMap).not.toBeNull());
+    act(() => result.current.move((doc) => moveRelease(doc, "nope", null)));
+    expect(result.current.moveError).not.toBeNull();
+    source = fakeSource(YAML.replace('"Map"', '"Other"'));
+    rerender();
+    await waitFor(() => expect(result.current.storyMap?.title).toBe("Other"));
+    expect(result.current.moveError).toBeNull();
   });
 
   it("only marks edits as unsaved when the source cannot be written", async () => {
