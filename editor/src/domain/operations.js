@@ -4,9 +4,11 @@ import {
   releasePath,
   activityPath,
   taskPath,
+  tasksPath,
   storiesPath,
   storyPath,
   allStories,
+  allTasks,
   nextId,
   countStories,
 } from "./lookups.js";
@@ -102,9 +104,9 @@ export function deleteActivity(doc, activityIndex) {
  */
 export function addTask(doc, activityIndex, title) {
   requireTitle(title);
-  const taskIds = (doc.toJS().activities || []).flatMap((a) => (a.tasks || []).map((t) => t.id));
+  const taskIds = allTasks(doc.toJS()).map((task) => task.id);
   const id = nextId(taskIds, ID_PREFIX.task);
-  append(doc, [...activityPath(activityIndex), "tasks"], { id, title, stories: [] });
+  append(doc, tasksPath(activityIndex), { id, title, stories: [] });
   return id;
 }
 
@@ -169,17 +171,20 @@ export function addStory(
  * be valid and not used by another story.
  */
 export function updateStory(doc, activityIndex, taskIndex, storyIndex, fields) {
-  const current = doc.getIn(storyPath(activityIndex, taskIndex, storyIndex)).toJSON();
+  const path = storyPath(activityIndex, taskIndex, storyIndex);
+  const current = doc.getIn(path).toJSON();
   if ("id" in fields && fields.id !== current.id) {
+    const isThisStory = (entry) =>
+      entry.activityIndex === activityIndex &&
+      entry.taskIndex === taskIndex &&
+      entry.storyIndex === storyIndex;
     const otherIds = allStories(doc.toJS())
-      .filter(
-        (entry) => entry.path.join() !== storyPath(activityIndex, taskIndex, storyIndex).join(),
-      )
+      .filter((entry) => !isThisStory(entry))
       .map(({ story }) => story.id);
     requireStoryId(fields.id, otherIds);
   }
   if ("title" in fields || "release" in fields) requireStory({ ...current, ...fields });
-  setFields(doc, storyPath(activityIndex, taskIndex, storyIndex), fields);
+  setFields(doc, path, fields);
 }
 
 export function deleteStory(doc, activityIndex, taskIndex, storyIndex) {

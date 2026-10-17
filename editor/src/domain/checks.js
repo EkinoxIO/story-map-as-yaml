@@ -1,5 +1,5 @@
 // Consistency rules JSON Schema cannot express.
-import { allStories } from "./lookups.js";
+import { allStories, allTasks } from "./lookups.js";
 
 /**
  * Problems JSON Schema cannot express: duplicate ids, and stories whose release is not
@@ -8,7 +8,7 @@ import { allStories } from "./lookups.js";
 export function checkReferences(storyMap) {
   const activities = storyMap.activities || [];
   const releases = storyMap.releases || [];
-  const tasks = activities.flatMap((a) => a.tasks || []);
+  const tasks = allTasks(storyMap);
   const stories = allStories(storyMap).map(({ story }) => story);
   const problems = [];
 

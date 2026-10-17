@@ -13,17 +13,21 @@ export function insertNode(doc, path, index, node) {
   }
   if (seq.items.length === 0) seq.flow = false;
   const at = Math.min(index, seq.items.length);
-  // The yaml library keeps a comment above the first item on the sequence itself: hand it to
-  // that item before another one takes its place.
-  if (at === 0 && seq.items.length && seq.commentBefore) {
-    const first = seq.items[0];
-    first.commentBefore = joinComments(seq.commentBefore, first.commentBefore);
-    seq.commentBefore = undefined;
-  }
+  // The first item is about to lose its place: it takes the sequence's comment along.
+  if (at === 0 && seq.items.length) giveSequenceCommentTo(seq, seq.items[0]);
   seq.items.splice(at, 0, node);
 }
 
-export function joinComments(...comments) {
+// The yaml library keeps a comment written above the first item of a sequence on the sequence
+// itself. When that item leaves first place (moved away, or another one inserted before it),
+// the comment goes with the item it was written for.
+export function giveSequenceCommentTo(seq, node) {
+  if (!seq.commentBefore) return;
+  node.commentBefore = joinComments(seq.commentBefore, node.commentBefore);
+  seq.commentBefore = undefined;
+}
+
+function joinComments(...comments) {
   return comments.filter(Boolean).join("\n") || undefined;
 }
 

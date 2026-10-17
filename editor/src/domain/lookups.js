@@ -3,12 +3,8 @@ import { ITEM_KIND } from "./vocabulary.js";
 
 export const releasePath = (releaseIndex) => ["releases", releaseIndex];
 export const activityPath = (activityIndex) => ["activities", activityIndex];
-export const taskPath = (activityIndex, taskIndex) => [
-  ...activityPath(activityIndex),
-  "tasks",
-  taskIndex,
-];
 export const tasksPath = (activityIndex) => [...activityPath(activityIndex), "tasks"];
+export const taskPath = (activityIndex, taskIndex) => [...tasksPath(activityIndex), taskIndex];
 export const storiesPath = (activityIndex, taskIndex) => [
   ...taskPath(activityIndex, taskIndex),
   "stories",
@@ -17,6 +13,11 @@ export const storyPath = (activityIndex, taskIndex, storyIndex) => [
   ...storiesPath(activityIndex, taskIndex),
   storyIndex,
 ];
+
+/** Every task of a plain story map object, across all activities. */
+export function allTasks(storyMap) {
+  return (storyMap.activities || []).flatMap((activity) => activity.tasks || []);
+}
 
 /** Every story of a plain story map object, with where it sits. */
 export function allStories(storyMap) {

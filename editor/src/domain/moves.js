@@ -3,7 +3,7 @@
 import { isMap, isSeq } from "yaml";
 import { ITEM_KIND, StoryMapError } from "./vocabulary.js";
 import { tasksPath, storiesPath, locate } from "./lookups.js";
-import { insertNode, joinComments } from "./nodes.js";
+import { insertNode, giveSequenceCommentTo } from "./nodes.js";
 
 function idOf(node) {
   return isMap(node) ? node.get("id") : undefined;
@@ -14,64 +14,49 @@ function itemsAt(doc, path) {
   return isSeq(seq) ? seq.items : [];
 }
 
-function mustExist(found, kind, id) {
+// Where the item `id` of `kind` (an ITEM_KIND) is; refuses an id the map does not have.
+function mustLocate(storyMap, kind, id) {
+  const found = locate(storyMap, kind, id);
   if (!found) throw new StoryMapError(`There is no ${kind} with id "${id}".`);
   return found;
 }
 
+// Moves a release or an activity: items of the top-level sequence `key`.
+function moveTopLevel(doc, key, kind, id, beforeId) {
+  if (id === beforeId) return false;
+  const found = mustLocate(doc.toJS(), kind, id);
+  const index = kind === ITEM_KIND.RELEASE ? found.releaseIndex : found.activityIndex;
+  return moveNode(doc, { fromPath: [key], fromIndex: index, toPath: [key], beforeId });
+}
+
 // Moves the node at `fromIndex` of the sequence at `fromPath` into the sequence at `toPath`,
-// before the item whose id is `beforeId`; without one, at `endIndex(items)` (default: last).
-// Comments attached to the node move with it. `update(node)` may change the node and returns
-// whether it did. Returns false when the node ends up unchanged where it was.
+// before the item whose id is `beforeId`; without one, at `endIndex(items, node)` (default:
+// last), which sees the node after `update`. Comments attached to the node move with it.
+// `update(node)` may change the node and returns whether it did. Returns false when the node
+// ends up unchanged where it was.
 function moveNode(
   doc,
   { fromPath, fromIndex, toPath, beforeId, endIndex = (items) => items.length, update },
 ) {
   const fromSeq = doc.getIn(fromPath);
   const [node] = fromSeq.items.splice(fromIndex, 1);
-  // A comment above the first item is stored on the sequence: it belongs to the moved item.
-  if (fromIndex === 0 && fromSeq.commentBefore) {
-    node.commentBefore = joinComments(fromSeq.commentBefore, node.commentBefore);
-    fromSeq.commentBefore = undefined;
-  }
+  if (fromIndex === 0) giveSequenceCommentTo(fromSeq, node);
   const updated = update?.(node) ?? false;
   const items = itemsAt(doc, toPath);
   const beforeIndex = beforeId == null ? -1 : items.findIndex((item) => idOf(item) === beforeId);
-  const index = Math.min(beforeIndex >= 0 ? beforeIndex : endIndex(items), items.length);
+  const index = Math.min(beforeIndex >= 0 ? beforeIndex : endIndex(items, node), items.length);
   insertNode(doc, toPath, index, node);
   return updated || doc.getIn(toPath) !== fromSeq || index !== fromIndex;
 }
 
 /** Moves a release before the release `beforeId`, or to the end when it is null. */
 export function moveRelease(doc, releaseId, beforeId = null) {
-  if (releaseId === beforeId) return false;
-  const { releaseIndex } = mustExist(
-    locate(doc.toJS(), ITEM_KIND.RELEASE, releaseId),
-    "release",
-    releaseId,
-  );
-  return moveNode(doc, {
-    fromPath: ["releases"],
-    fromIndex: releaseIndex,
-    toPath: ["releases"],
-    beforeId,
-  });
+  return moveTopLevel(doc, "releases", ITEM_KIND.RELEASE, releaseId, beforeId);
 }
 
 /** Moves an activity, with its tasks and stories, before `beforeId` or to the end. */
 export function moveActivity(doc, activityId, beforeId = null) {
-  if (activityId === beforeId) return false;
-  const { activityIndex } = mustExist(
-    locate(doc.toJS(), ITEM_KIND.ACTIVITY, activityId),
-    "activity",
-    activityId,
-  );
-  return moveNode(doc, {
-    fromPath: ["activities"],
-    fromIndex: activityIndex,
-    toPath: ["activities"],
-    beforeId,
-  });
+  return moveTopLevel(doc, "activities", ITEM_KIND.ACTIVITY, activityId, beforeId);
 }
 
 /**
@@ -81,8 +66,8 @@ export function moveActivity(doc, activityId, beforeId = null) {
 export function moveTask(doc, taskId, { activityId, beforeId = null }) {
   if (taskId === beforeId) return false;
   const storyMap = doc.toJS();
-  const from = mustExist(locate(storyMap, ITEM_KIND.TASK, taskId), "task", taskId);
-  const to = mustExist(locate(storyMap, ITEM_KIND.ACTIVITY, activityId), "activity", activityId);
+  const from = mustLocate(storyMap, ITEM_KIND.TASK, taskId);
+  const to = mustLocate(storyMap, ITEM_KIND.ACTIVITY, activityId);
   return moveNode(doc, {
     fromPath: tasksPath(from.activityIndex),
     fromIndex: from.taskIndex,
@@ -100,12 +85,9 @@ export function moveTask(doc, taskId, { activityId, beforeId = null }) {
 export function moveStory(doc, storyId, { taskId, release, beforeId = null }) {
   if (storyId === beforeId) return false;
   const storyMap = doc.toJS();
-  const from = mustExist(locate(storyMap, ITEM_KIND.STORY, storyId), "story", storyId);
-  const to = mustExist(locate(storyMap, ITEM_KIND.TASK, taskId), "task", taskId);
-  if (release != null && !(storyMap.releases || []).some((r) => r.id === release)) {
-    throw new StoryMapError(`There is no release with id "${release}".`);
-  }
-  let targetRelease;
+  const from = mustLocate(storyMap, ITEM_KIND.STORY, storyId);
+  const to = mustLocate(storyMap, ITEM_KIND.TASK, taskId);
+  if (release != null) mustLocate(storyMap, ITEM_KIND.RELEASE, release);
   return moveNode(doc, {
     fromPath: storiesPath(from.activityIndex, from.taskIndex),
     fromIndex: from.storyIndex,
@@ -114,12 +96,11 @@ export function moveStory(doc, storyId, { taskId, release, beforeId = null }) {
     update: (node) => {
       const changes = release != null && node.get("release") !== release;
       if (changes) node.set("release", release);
-      targetRelease = node.get("release");
       return changes;
     },
-    endIndex: (items) => {
+    endIndex: (items, node) => {
       const last = items.findLastIndex(
-        (item) => isMap(item) && item.get("release") === targetRelease,
+        (item) => isMap(item) && item.get("release") === node.get("release"),
       );
       return last >= 0 ? last + 1 : items.length;
     },
