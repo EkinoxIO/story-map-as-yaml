@@ -14,6 +14,7 @@ sliced horizontally into releases that each have a goal.
 | `scripts/validate.sh` | Validates story map files: schema, unique ids, known releases |
 | `editor/` | Browser editor (React + Vite), built into a single HTML file |
 | `site/` | GitHub Pages landing page, favicon, share image (`social-card.svg` → `.png`) and Ekinox logo |
+| `LICENSE`, `NOTICE`, `TRADEMARKS.md` | Apache 2.0 license, copyright notice, and how the Ekinox brand may be used |
 
 ## Editor
 
@@ -134,3 +135,10 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 or `fix(domain): keep comments when renaming a release`. Common types are `feat`, `fix`,
 `refactor`, `test`, `docs`, `style`, `build`, `ci` and `chore`; scopes used here are
 `editor`, `domain`, `schema`, `scripts`, `site`, `ci` and `pages`.
+
+## License
+
+The code is licensed under the [Apache License 2.0](LICENSE): you may use, change and
+redistribute it, keeping the notices in [LICENSE](LICENSE) and [NOTICE](NOTICE). The Ekinox
+name and logo are trademarks of Ekinox and are not covered by that license: see
+[TRADEMARKS.md](TRADEMARKS.md).
