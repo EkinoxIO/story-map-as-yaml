@@ -19,6 +19,7 @@ import {
   plural,
   locate,
   itemAt,
+  nextStoryId,
   ITEM_KIND,
 } from "./domain/storyMap.js";
 
@@ -117,17 +118,25 @@ const builders = {
     const task = storyMap.activities[activityIndex].tasks[taskIndex];
     const story = storyIndex != null ? task.stories[storyIndex] : null;
     const releaseIds = (storyMap.releases || []).map((r) => r.id);
+    // A new story gets the next free id, which can be changed like any other field.
     const initial = story
       ? {
           title: story.title || "",
+          id: story.id ?? "",
           release: story.release,
           status: story.status,
         }
-      : { title: "", release: release || releaseIds[0], status: STATUSES[0] };
+      : {
+          title: "",
+          id: nextStoryId(storyMap),
+          release: release || releaseIds[0],
+          status: STATUSES[0],
+        };
     return {
       title: story ? `Edit ${story.id}` : `Add story to "${task.title}"`,
       fields: [
         titleField,
+        { name: "id", label: "Id", required: true },
         { name: "release", label: "Release", options: options(releaseIds, initial.release) },
         { name: "status", label: "Status", options: options(STATUSES, initial.status) },
       ],

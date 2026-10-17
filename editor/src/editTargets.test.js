@@ -91,6 +91,41 @@ describe("dialogFor", () => {
     ]);
   });
 
+  it("suggests an id for a new story, which can be changed", () => {
+    const target = { kind: EDIT_KIND.STORY, activityIndex: 1, taskIndex: 0, parentId: "task_2" };
+    const { dialog, saved } = open(target);
+    expect(dialog.fields.map((f) => f.name)).toContain("id");
+    expect(dialog.initial.id).toBe("US-3");
+    dialog.onSave({ ...dialog.initial, id: "US-50", title: "Card" });
+    expect(saved().activities[1].tasks[0].stories[0].id).toBe("US-50");
+  });
+
+  it("edits the id of an existing story", () => {
+    const target = {
+      kind: EDIT_KIND.STORY,
+      activityIndex: 0,
+      taskIndex: 0,
+      storyIndex: 0,
+      id: "US-1",
+    };
+    const { dialog, saved } = open(target);
+    expect(dialog.initial.id).toBe("US-1");
+    dialog.onSave({ ...dialog.initial, id: "US-10" });
+    expect(saved().activities[0].tasks[0].stories.map((s) => s.id)).toEqual(["US-10", "US-2"]);
+  });
+
+  it("refuses an id another story already has", () => {
+    const target = {
+      kind: EDIT_KIND.STORY,
+      activityIndex: 0,
+      taskIndex: 0,
+      storyIndex: 0,
+      id: "US-1",
+    };
+    const { dialog } = open(target);
+    expect(() => dialog.onSave({ ...dialog.initial, id: "US-2" })).toThrow(StoryMapError);
+  });
+
   it("keeps an unknown status selectable instead of silently changing it", () => {
     const yaml = YAML.replace('status: "Done"', 'status: "Blocked"');
     const { dialog } = open(
