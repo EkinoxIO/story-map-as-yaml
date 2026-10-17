@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { fileHandleSource, fileCopySource, sourceFor, WriteConflictError } from "./sources.js";
+// @vitest-environment jsdom
+import {
+  canOpenFilesInPlace,
+  canSaveAsNewFile,
+  fileHandleSource,
+  fileCopySource,
+  memorySource,
+  sourceFor,
+  WriteConflictError,
+} from "./sources.js";
 
 // In-memory stand-in for a FileSystemFileHandle.
 function fakeHandle(text, { permission = "granted" } = {}) {
@@ -64,5 +73,28 @@ describe("sourceFor", () => {
   it("picks the adapter from what the file picker returned", () => {
     expect(sourceFor(fakeHandle("").handle).writable).toBe(true);
     expect(sourceFor(new File([""], "map.yml")).writable).toBe(false);
+  });
+});
+
+describe("memorySource", () => {
+  it("reads its text, is not writable and says it is not saved yet", async () => {
+    const source = memorySource("sample.yml", "title: x\n");
+    expect(source).toMatchObject({ name: "sample.yml", writable: false, inMemory: true });
+    expect(await source.read()).toEqual({ text: "title: x\n", version: 0 });
+    await expect(source.write("y", 0)).rejects.toThrow(/not saved to a file yet/);
+  });
+});
+
+describe("browser capabilities", () => {
+  it("follow the File System Access API being there", () => {
+    const saved = { open: window.showOpenFilePicker, save: window.showSaveFilePicker };
+    window.showOpenFilePicker = undefined;
+    window.showSaveFilePicker = undefined;
+    expect([canOpenFilesInPlace(), canSaveAsNewFile()]).toEqual([false, false]);
+    window.showOpenFilePicker = async () => [];
+    window.showSaveFilePicker = async () => ({});
+    expect([canOpenFilesInPlace(), canSaveAsNewFile()]).toEqual([true, true]);
+    window.showOpenFilePicker = saved.open;
+    window.showSaveFilePicker = saved.save;
   });
 });

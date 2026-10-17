@@ -11,7 +11,7 @@ const folderHandle = { kind: "directory", name: "maps" };
 
 let FilePicker;
 beforeAll(async () => {
-  // The file picker decides at import time whether the browser can hand out file handles.
+  // A browser that hands out file handles (Chrome, Edge), as the file picker checks.
   window.showOpenFilePicker = async () => [fileHandle];
   FilePicker = (await import("./FilePicker.jsx")).default;
 });

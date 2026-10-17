@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { parseStoryMap, serialize, applyEdit, StoryMapError } from "./domain/storyMap.js";
+import { saveAsNewFile } from "./storage/sources.js";
 
 const DEFAULT_POLL_INTERVAL_MS = 1000;
 
@@ -36,7 +37,8 @@ export default function useStoryMapFile(
     setLoadError(null);
     setSaveError(null);
     setMoveError(null);
-    setUnsaved(false);
+    // A map that only lives in the page (sample, blank) is unsaved until saved or downloaded.
+    setUnsaved(Boolean(source?.inMemory));
     if (!source) return;
     let cancelled = false;
     shownVersion.current = null;
@@ -99,6 +101,17 @@ export default function useStoryMapFile(
     }
   }
 
+  // Saves the map to a new file the user chooses (Chrome, Edge). Resolves to a source for
+  // that file, to edit the map there, or to null when cancelled or failed (then saveError).
+  async function saveAs() {
+    try {
+      return await saveAsNewFile(source.name, serialize(doc));
+    } catch (e) {
+      setSaveError(`Not saved: ${e.message}`);
+      return null;
+    }
+  }
+
   function downloadCopy() {
     download(source.name, serialize(doc));
     setUnsaved(false);
@@ -113,6 +126,7 @@ export default function useStoryMapFile(
     unsaved,
     applyAndSave,
     move,
+    saveAs,
     downloadCopy,
   };
 }
