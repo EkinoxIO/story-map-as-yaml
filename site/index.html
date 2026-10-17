@@ -295,29 +295,54 @@
           by drag and drop or from the keyboard.
         </li>
         <li>
-          In Chrome and Edge, every change is saved straight into your file,
-          comments and formatting included. Your files stay on your computer:
-          nothing is uploaded.
-        </li>
-        <li>
           The format is open: download its
           <a href="story-map.schema.json">JSON Schema</a> and the
           <a href="sample_story_map.yml">sample story map</a>.
         </li>
       </ul>
 
+      <h2>Live with your file</h2>
+      <p>
+        In Chrome and Edge, the editor works on the story map file itself, both
+        ways:
+      </p>
+      <ul>
+        <li>
+          <strong>Changes made elsewhere show up on their own.</strong> When an
+          AI agent, another editor or a <code>git pull</code> changes the file,
+          the map updates within a second, with no reload.
+        </li>
+        <li>
+          <strong>Changes made in the editor are saved straight into the
+          file</strong>, comments and formatting included, ready for the next
+          agent run or commit.
+        </li>
+      </ul>
+      <p>
+        Your files stay on your computer: nothing is uploaded. Firefox and
+        Safari open a copy instead: you download your edits, and open the file
+        again to see changes made elsewhere.
+      </p>
+
       <div class="card">
         <a class="open" href="editor/">Open the editor</a>
         <p class="note">
-          Works in any modern browser; editing files in place needs Chrome or
+          Works in any modern browser; live sync with the file needs Chrome or
           Edge.
+        </p>
+        <p class="note">
+          <a href="https://github.com/EkinoxIO/story-map-as-yaml">Source code on GitHub</a>
         </p>
       </div>
     </main>
 
     <footer>
       Made by
-      <a href="https://ekinox.io" target="_blank" rel="noreferrer">Ekinox</a>.
+      <a href="https://ekinox.io" target="_blank" rel="noreferrer">Ekinox</a>
+      ·
+      <a href="https://github.com/EkinoxIO/story-map-as-yaml">Source code</a>
+      ·
+      <a href="https://github.com/EkinoxIO/story-map-as-yaml/blob/main/LICENSE">Apache 2.0 license</a>
     </footer>
   </body>
 </html>
