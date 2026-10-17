@@ -1,0 +1,56 @@
+name: Pages
+
+# Publishes the editor on GitHub Pages, so it starts from a browser without downloading
+# anything. Story maps are still opened from, and saved to, each person's own disk.
+# The site is the committed single-file build (editor/dist).
+#
+# It deploys only after CI passed on a push to main, so a build CI finds stale or broken
+# (tests, formatting, the dist check) is never published. It can also be run by hand.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push')
+    # One deployment at a time; a newer deployment waits instead of cancelling one midway.
+    # Set on the job, not the workflow, so a run skipped by the condition above (CI failed)
+    # never takes the place of a deployment waiting its turn.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The commit CI checked, not whatever main points to by now.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp editor/dist/index.html _site/index.html
+          # Offered for download, to try the editor or start a new map.
+          cp sample_story_map.yml story-map.schema.json _site/
+
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
