@@ -65,7 +65,9 @@ export default function FilePicker({ onPick }) {
       <h2>Open a story map</h2>
       <p>Drop a YAML file here, or pick one.</p>
       {canOpenInPlace ? (
-        <button onClick={pickWithHandle}>Choose file</button>
+        <button className="primary" onClick={pickWithHandle}>
+          Choose file
+        </button>
       ) : (
         <input
           type="file"

@@ -3,7 +3,7 @@
 export const STATUS_COLORS = {
   Backlog: "#8c959f",
   "In Progress": "#bf8700",
-  "In Review": "#8250df",
+  "In Review": "#0969da",
   Done: "#1a7f37",
 };
 

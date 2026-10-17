@@ -1,3 +1,4 @@
+import ekinoxLogo from "../assets/ekinox-logo.png";
 import FilePicker from "./FilePicker.jsx";
 
 const EKINOX_URL = "https://ekinox.io";
@@ -22,9 +23,10 @@ export default function StartScreen({ onPick, onStart }) {
         A map started here lives in this page until you save it to a file.
       </p>
       <p className="by-ekinox">
-        Story Map as YAML, by{" "}
+        Story Map as YAML, by
         <a href={EKINOX_URL} target="_blank" rel="noreferrer">
-          Ekinox
+          <img src={ekinoxLogo} alt="" width="20" height="20" />
+          ekinox
         </a>
       </p>
     </div>
