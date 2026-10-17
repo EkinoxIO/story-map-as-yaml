@@ -2,6 +2,8 @@ import { Fragment } from "react";
 import { allStories } from "../domain/storyMap.js";
 import { EDIT_KIND } from "../editTargets.js";
 import { statusColor } from "../statusColors.js";
+import { foldKey } from "../folding.js";
+import useFolding from "../useFolding.js";
 
 const UNASSIGNED = {
   id: "__unassigned__",
@@ -9,13 +11,34 @@ const UNASSIGNED = {
   goal: "Stories whose release is not listed under `releases`.",
 };
 
-function StoryCard({ story, onClick }) {
+function FoldToggle({ folded, label, onToggle }) {
   return (
     <button
-      className="block story"
-      style={{ "--status-color": statusColor(story.status) }}
-      onClick={onClick}
+      type="button"
+      className="fold"
+      aria-expanded={!folded}
+      aria-label={`${folded ? "Unfold" : "Fold"} ${label}`}
+      title={folded ? "Unfold" : "Fold"}
+      onClick={onToggle}
     >
+      {folded ? "▸" : "▾"}
+    </button>
+  );
+}
+
+// A compact card (under a folded task) shows only the story id and, through its left border
+// color, its status: how many stories and how far along, not what they are.
+function StoryCard({ story, compact, onClick }) {
+  const style = { "--status-color": statusColor(story.status) };
+  if (compact) {
+    return (
+      <button className="block story compact" style={style} title={story.id} onClick={onClick}>
+        <div className="id">{story.id}</div>
+      </button>
+    );
+  }
+  return (
+    <button className="block story" style={style} onClick={onClick}>
       <div className="id">{story.id}</div>
       <div>{story.title}</div>
       <div className="tags">{story.status && <span className="tag">{story.status}</span>}</div>
@@ -23,43 +46,56 @@ function StoryCard({ story, onClick }) {
   );
 }
 
-function ReleaseBand({ release, onEdit }) {
+// A folded release keeps its title and id; its goal and stories are hidden.
+function ReleaseBand({ release, folded, onToggle, onEdit }) {
+  const toggle = (
+    <FoldToggle folded={folded} label={`release ${release.title}`} onToggle={onToggle} />
+  );
   if (release === UNASSIGNED) {
     return (
       <div className="release">
-        <strong>{release.title}</strong>
-        <div className="goal">{release.goal}</div>
+        {toggle}
+        <div>
+          <strong>{release.title}</strong>
+          {!folded && <div className="goal">{release.goal}</div>}
+        </div>
       </div>
     );
   }
   return (
-    <button
-      className="block release"
-      onClick={() =>
-        onEdit({ kind: EDIT_KIND.RELEASE, releaseIndex: release.releaseIndex, id: release.id })
-      }
-    >
-      <strong>{release.title}</strong>
-      <span className="tag">{release.id}</span>
-      <div className="goal">{release.goal}</div>
-    </button>
+    <div className="release">
+      {toggle}
+      <button
+        className="block"
+        onClick={() =>
+          onEdit({ kind: EDIT_KIND.RELEASE, releaseIndex: release.releaseIndex, id: release.id })
+        }
+      >
+        <strong>{release.title}</strong>
+        <span className="tag">{release.id}</span>
+        {!folded && <div className="goal">{release.goal}</div>}
+      </button>
+    </div>
   );
 }
 
 function Cell({ column, release, stories, onEdit }) {
-  const { activityIndex, taskIndex } = column;
+  // Nothing shows under a folded activity.
+  if (column.activityFolded) return <div className="cell" />;
+  const { activityIndex, taskIndex, taskFolded } = column;
   return (
     <div className="cell">
       {stories.map(({ story, storyIndex }) => (
         <StoryCard
           key={story.id ?? storyIndex}
           story={story}
+          compact={taskFolded}
           onClick={() =>
             onEdit({ kind: EDIT_KIND.STORY, activityIndex, taskIndex, storyIndex, id: story.id })
           }
         />
       ))}
-      {column.task && release !== UNASSIGNED && (
+      {column.task && !taskFolded && release !== UNASSIGNED && (
         <button
           className="add"
           onClick={() =>
@@ -79,53 +115,78 @@ function Cell({ column, release, stories, onEdit }) {
   );
 }
 
-function ActivityHeader({ activity, activityIndex, onEdit }) {
+// A folded activity keeps its title over one narrow, empty column per task.
+function ActivityHeader({ activity, activityIndex, span, folded, onToggle, onEdit }) {
   return (
-    <div className="activity" style={{ gridColumn: `span ${(activity.tasks || []).length || 1}` }}>
+    <div className="activity" style={{ gridColumn: `span ${span}` }}>
+      <FoldToggle folded={folded} label={`activity ${activity.title}`} onToggle={onToggle} />
       <button
         className="block"
         onClick={() => onEdit({ kind: EDIT_KIND.ACTIVITY, activityIndex, id: activity.id })}
       >
         {activity.title}
       </button>
+      {!folded && (
+        <button
+          className="add"
+          title="Add task"
+          onClick={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, parentId: activity.id })}
+        >
+          +
+        </button>
+      )}
+    </div>
+  );
+}
+
+// A folded task keeps its title, in a column only as wide as needed; its stories show
+// only their id. Under a folded activity, each task is an empty block: the number of tasks
+// stays visible, not their titles.
+function TaskHeader({ column, onToggle, onEdit }) {
+  const { activityIndex, taskIndex, task } = column;
+  if (column.activityFolded) return <div className="task placeholder" aria-hidden="true" />;
+  if (!task) return <div className="task empty">No task yet</div>;
+  return (
+    <div className="task">
+      <FoldToggle folded={column.taskFolded} label={`task ${task.title}`} onToggle={onToggle} />
       <button
-        className="add"
-        title="Add task"
-        onClick={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, parentId: activity.id })}
+        className="block"
+        onClick={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, taskIndex, id: task.id })}
       >
-        +
+        {task.title}
       </button>
     </div>
   );
 }
 
-function TaskHeader({ column, onEdit }) {
-  const { activityIndex, taskIndex, task } = column;
-  if (!task) return <div className="task empty">No task yet</div>;
-  return (
-    <button
-      className="block task"
-      onClick={() => onEdit({ kind: EDIT_KIND.TASK, activityIndex, taskIndex, id: task.id })}
-    >
-      {task.title}
-    </button>
-  );
+// Folded columns are only as wide as their content; the others have the standard width.
+function columnWidth(column) {
+  return column.activityFolded || column.taskFolded ? "max-content" : "var(--col-width)";
 }
 
 export default function StoryMap({ storyMap, onEdit }) {
+  const { isFolded, toggle } = useFolding();
   const activities = storyMap.activities || [];
-  // One column per task. An activity without tasks still gets a column,
-  // so it can be seen and filled.
-  const columns = activities.flatMap((activity, activityIndex) =>
-    (activity.tasks || []).length
-      ? activity.tasks.map((task, taskIndex) => ({
-          key: task.id ?? `${activityIndex}-${taskIndex}`,
-          activityIndex,
-          taskIndex,
-          task,
-        }))
-      : [{ key: activity.id ?? activityIndex, activityIndex, taskIndex: null, task: null }],
-  );
+  // One column per task; an activity without tasks still gets one, so it can be filled.
+  const columns = activities.flatMap((activity, activityIndex) => {
+    const tasks = activity.tasks || [];
+    const activityFolded = isFolded(foldKey.activity(activity, activityIndex));
+    if (!tasks.length) {
+      return [{ key: `${activityIndex}-empty`, activityIndex, task: null, activityFolded }];
+    }
+    return tasks.map((task, taskIndex) => {
+      const taskFoldKey = foldKey.task(task, activityIndex, taskIndex);
+      return {
+        key: task.id ?? `${activityIndex}-${taskIndex}`,
+        activityIndex,
+        taskIndex,
+        task,
+        foldKey: taskFoldKey,
+        activityFolded,
+        taskFolded: !activityFolded && isFolded(taskFoldKey),
+      };
+    });
+  });
   const releases = (storyMap.releases || []).map((release, releaseIndex) => ({
     ...release,
     releaseIndex,
@@ -157,35 +218,53 @@ export default function StoryMap({ storyMap, onEdit }) {
       {columns.length === 0 && <p>This story map is empty: add an activity to start.</p>}
       {columns.length > 0 && (
         <div className="map">
-          <div
-            className="grid"
-            style={{ gridTemplateColumns: `repeat(${columns.length}, var(--col-width))` }}
-          >
-            {activities.map((activity, activityIndex) => (
-              <ActivityHeader
-                key={activity.id ?? activityIndex}
-                activity={activity}
-                activityIndex={activityIndex}
+          <div className="grid" style={{ gridTemplateColumns: columns.map(columnWidth).join(" ") }}>
+            {activities.map((activity, activityIndex) => {
+              const key = foldKey.activity(activity, activityIndex);
+              return (
+                <ActivityHeader
+                  key={key}
+                  activity={activity}
+                  activityIndex={activityIndex}
+                  span={columns.filter((c) => c.activityIndex === activityIndex).length}
+                  folded={isFolded(key)}
+                  onToggle={() => toggle(key)}
+                  onEdit={onEdit}
+                />
+              );
+            })}
+            {columns.map((column) => (
+              <TaskHeader
+                key={column.key}
+                column={column}
+                onToggle={column.foldKey && (() => toggle(column.foldKey))}
                 onEdit={onEdit}
               />
             ))}
-            {columns.map((column) => (
-              <TaskHeader key={column.key} column={column} onEdit={onEdit} />
-            ))}
-            {rows.map((release) => (
-              <Fragment key={release.releaseIndex ?? release.id}>
-                <ReleaseBand release={release} onEdit={onEdit} />
-                {columns.map((column) => (
-                  <Cell
-                    key={column.key}
-                    column={column}
+            {rows.map((release) => {
+              const key = foldKey.release(release);
+              const folded = isFolded(key);
+              return (
+                <Fragment key={release.releaseIndex ?? release.id}>
+                  <ReleaseBand
                     release={release}
-                    stories={storiesIn(column, release)}
+                    folded={folded}
+                    onToggle={() => toggle(key)}
                     onEdit={onEdit}
                   />
-                ))}
-              </Fragment>
-            ))}
+                  {!folded &&
+                    columns.map((column) => (
+                      <Cell
+                        key={column.key}
+                        column={column}
+                        release={release}
+                        stories={storiesIn(column, release)}
+                        onEdit={onEdit}
+                      />
+                    ))}
+                </Fragment>
+              );
+            })}
           </div>
         </div>
       )}
