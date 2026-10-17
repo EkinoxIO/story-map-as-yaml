@@ -1,8 +1,9 @@
 name: Pages
 
-# Publishes the editor on GitHub Pages, so it starts from a browser without downloading
-# anything. Story maps are still opened from, and saved to, each person's own disk.
-# The site is the committed single-file build (editor/dist).
+# Publishes the site on GitHub Pages: a landing page (site/index.html) at the root and the
+# editor at /editor/, so it starts from a browser without downloading anything. Story maps are
+# still opened from, and saved to, each person's own disk. The editor is the committed
+# single-file build (editor/dist).
 #
 # It deploys only after CI passed on a push to main, so a build CI finds stale or broken
 # (tests, formatting, the dist check) is never published. It can also be run by hand.
@@ -43,10 +44,13 @@ jobs:
 
       - name: Assemble the site
         run: |
-          mkdir -p _site
-          cp editor/dist/index.html _site/index.html
+          mkdir -p _site/editor
+          cp site/index.html _site/index.html
+          cp editor/dist/index.html _site/editor/index.html
           # Offered for download, to try the editor or start a new map.
           cp sample_story_map.yml story-map.schema.json _site/
+          # Favicon and the image shown in link previews on social networks and chat tools.
+          cp site/favicon.svg site/social-card.png site/ekinox-logo.png _site/
 
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
