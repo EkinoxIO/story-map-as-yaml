@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { canSaveAsNewFile } from "../storage/sources.js";
 
 // The file part of the header: which file, whether it is saved, and the file actions.
 // `revision` changes whenever the map changes (the document itself will do).
 // Close asks first when changes are not saved. That confirmation disarms as soon as the map
 // changes, is saved, or the button loses focus, so it never applies to changes made later.
+// It is armed for the revision on screen when Close was clicked, and holds only while that
+// revision is still there: no effect has to reset it, so none can do so late.
 export default function FileBar({
   name,
   lastUpdated,
@@ -16,14 +18,12 @@ export default function FileBar({
   onDownload,
   onClose,
 }) {
-  const [confirmingClose, setConfirmingClose] = useState(false);
-  useEffect(() => {
-    setConfirmingClose(false);
-  }, [revision, unsaved]);
+  const [armedRevision, setArmedRevision] = useState(null);
+  const confirmingClose = unsaved && armedRevision !== null && armedRevision === revision;
 
   function close() {
     if (unsaved && !confirmingClose) {
-      setConfirmingClose(true);
+      setArmedRevision(revision);
       return;
     }
     onClose();
@@ -59,7 +59,7 @@ export default function FileBar({
         className={confirmingClose ? "danger" : ""}
         title="Close this story map and go back to the start screen"
         onClick={close}
-        onBlur={() => setConfirmingClose(false)}
+        onBlur={() => setArmedRevision(null)}
       >
         {confirmingClose ? "Discard unsaved changes?" : "Close"}
       </button>
