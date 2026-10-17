@@ -1,0 +1,271 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1f2328;
+  --muted: #656d76;
+  --border: #d0d7de;
+  --activity: #2f4b7c;
+  --task: #dbe4f3;
+  --release: #eef1f5;
+  --danger: #cf222e;
+  --col-width: 200px;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  font-size: 18px;
+  margin: 0;
+  flex: 1;
+}
+header .meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+main {
+  padding: 16px;
+}
+
+:where(button) {
+  font: inherit;
+  color: inherit;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+button.primary {
+  background: var(--activity);
+  border-color: var(--activity);
+  color: #fff;
+}
+button.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+/* Map elements are buttons so they can be clicked to edit, but look like plain blocks. */
+:where(button.block) {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  border-radius: 0;
+}
+button.add {
+  padding: 2px 8px;
+  font-size: 13px;
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+  opacity: 0.6;
+}
+button.add:hover {
+  opacity: 1;
+}
+
+.dropzone {
+  max-width: 520px;
+  margin: 64px auto;
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+}
+.dropzone.dragging {
+  border-color: var(--activity);
+  background: var(--task);
+}
+.dropzone p {
+  color: var(--muted);
+}
+.dropzone .problem {
+  color: var(--danger);
+}
+.error {
+  max-width: 720px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  background: #ffebe9;
+  border: 1px solid #ff8182;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.map {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.grid {
+  display: grid;
+  gap: 8px;
+  width: max-content;
+}
+.activity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--activity);
+  color: #fff;
+  font-weight: 600;
+  border-radius: 6px;
+}
+.activity button.add {
+  color: #fff;
+  border-color: #fff;
+}
+.task {
+  padding: 8px 12px;
+  background: var(--task);
+  font-weight: 500;
+  border-radius: 6px;
+}
+.task.empty {
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-weight: normal;
+}
+.release {
+  grid-column: 1 / -1;
+  position: sticky;
+  left: 0;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: var(--release);
+  border-left: 4px solid var(--activity);
+  border-radius: 4px;
+  max-width: calc(100vw - 32px);
+}
+.release strong {
+  margin-right: 8px;
+}
+.release .goal {
+  color: var(--muted);
+  font-size: 14px;
+}
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.story {
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--status-color);
+  border-radius: 6px;
+  font-size: 14px;
+}
+.story:hover,
+.task:hover,
+.release:hover {
+  outline: 2px solid var(--activity);
+  outline-offset: -2px;
+}
+.story .id {
+  color: var(--muted);
+  font-size: 12px;
+}
+.story .tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.tag {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--release);
+  color: var(--muted);
+}
+
+dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.3);
+}
+dialog h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+dialog label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+dialog input,
+dialog select,
+dialog textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+dialog .problem {
+  color: var(--danger);
+  font-size: 13px;
+}
+dialog .actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+dialog .actions .spacer {
+  flex: 1;
+}
+
+.warning {
+  max-width: 720px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  background: #fff8c5;
+  border: 1px solid #d4a72c;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.warning ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
