@@ -8,12 +8,18 @@ describe("foldKey", () => {
   it("keys items by id", () => {
     expect(foldKey.activity({ id: "act_1" }, 3)).toBe("activity:act_1");
     expect(foldKey.task({ id: "task_2" }, 0, 1)).toBe("task:task_2");
-    expect(foldKey.release({ id: "MVP" })).toBe("release:MVP");
+    expect(foldKey.release({ id: "MVP" }, 2)).toBe("release:MVP");
   });
 
   it("falls back to the position for items without an id", () => {
-    expect(foldKey.activity({}, 3)).toBe("activity:3");
-    expect(foldKey.task({}, 0, 1)).toBe("task:0-1");
+    expect(foldKey.activity({}, 3)).toBe("activity@3");
+    expect(foldKey.task({}, 0, 1)).toBe("task@0-1");
+    expect(foldKey.release({}, 2)).toBe("release@2");
+  });
+
+  it("never mixes a position with an id that looks like one", () => {
+    expect(foldKey.release({}, 1)).not.toBe(foldKey.release({ id: "1" }, 0));
+    expect(foldKey.activity({}, 1)).not.toBe(foldKey.activity({ id: 1 }, 0));
   });
 
   it("never mixes kinds that share an id", () => {

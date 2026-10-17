@@ -49,6 +49,12 @@ describe("buildLayout", () => {
     ]);
   });
 
+  it("folds a release without an id on its own", () => {
+    const noIds = { ...STORY_MAP, releases: [{ title: "First" }, { title: "Second" }] };
+    const { rows } = buildLayout(noIds, (key) => key === "release@1");
+    expect(rows.slice(0, 2).map((r) => r.folded)).toEqual([false, true]);
+  });
+
   it("adds the Unassigned row only when a story needs it", () => {
     const withOrphan = structuredClone(STORY_MAP);
     withOrphan.activities[0].tasks[0].stories.push({ id: "US-9", release: "v9" });

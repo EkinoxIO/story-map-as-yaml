@@ -5,7 +5,6 @@ import { UNASSIGNED, buildLayout, columnWidth } from "../mapLayout.js";
 import { canDropStories, drop, isMoveKey, keyboardMove } from "../mapMoves.js";
 import { statusColor } from "../statusColors.js";
 import useDragAndDrop from "../useDragAndDrop.js";
-import { foldKey } from "../folding.js";
 import useFolding from "../useFolding.js";
 import Clickable from "./Clickable.jsx";
 
@@ -292,7 +291,7 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
         <div className="map" ref={mapRef}>
           <div className="grid" style={{ gridTemplateColumns: columns.map(columnWidth).join(" ") }}>
             {activities.map((activity, activityIndex) => {
-              const key = foldKey.activity(activity, activityIndex);
+              const key = activity.foldKey;
               return (
                 <ActivityHeader
                   key={key}
@@ -320,8 +319,9 @@ export default function StoryMap({ storyMap, onEdit, onMove }) {
               />
             ))}
             {rows.map((row) => {
-              const key = foldKey.release(row);
-              // Releases carry their fold state; the Unassigned row is not a release.
+              // Every row carries its fold key. Releases carry their fold state too; the
+              // Unassigned row is not a release, so its state is read here.
+              const key = row.foldKey;
               const folded = row.folded ?? isFolded(key);
               return (
                 <Fragment key={row.releaseIndex ?? row.id}>

@@ -3,28 +3,31 @@
 import { allStories } from "./domain/storyMap.js";
 import { foldKey } from "./folding.js";
 
+const UNASSIGNED_ID = "__unassigned__";
+
 /** The extra row for stories whose release is not listed under `releases`. */
 export const UNASSIGNED = Object.freeze({
-  id: "__unassigned__",
+  id: UNASSIGNED_ID,
   title: "Unassigned",
   goal: "Stories whose release is not listed under `releases`.",
+  foldKey: foldKey.release({ id: UNASSIGNED_ID }),
 });
 
 /**
  * The grid for `storyMap`, given which items are folded (`isFolded(foldKey)`):
- * - activities: the activities (with their index and whether they are folded)
+ * - activities: the activities (with their index, fold key and whether they are folded)
  * - columns: one per task, or one for an activity without tasks; each knows its activity
  *   and task indices, its task, its fold key, and whether it or its activity is folded
- * - rows: the releases (with their index and whether they are folded), plus UNASSIGNED when
- *   some stories need it
+ * - releases: the releases of the file (with their index, fold key and whether they are
+ *   folded), the items moves are made between
+ * - rows: the rows of the grid: the releases, plus UNASSIGNED when some stories need it
  * - storiesIn(column, row): the stories of that cell, in file order, with their indices
  */
 export function buildLayout(storyMap, isFolded = () => false) {
-  const activities = (storyMap.activities || []).map((activity, activityIndex) => ({
-    ...activity,
-    activityIndex,
-    folded: isFolded(foldKey.activity(activity, activityIndex)),
-  }));
+  const activities = (storyMap.activities || []).map((activity, activityIndex) => {
+    const key = foldKey.activity(activity, activityIndex);
+    return { ...activity, activityIndex, foldKey: key, folded: isFolded(key) };
+  });
   const columns = activities.flatMap((activity, activityIndex) => {
     const tasks = activity.tasks || [];
     const activityFolded = activity.folded;
@@ -44,11 +47,10 @@ export function buildLayout(storyMap, isFolded = () => false) {
       };
     });
   });
-  const releases = (storyMap.releases || []).map((release, releaseIndex) => ({
-    ...release,
-    releaseIndex,
-    folded: isFolded(foldKey.release(release)),
-  }));
+  const releases = (storyMap.releases || []).map((release, releaseIndex) => {
+    const key = foldKey.release(release, releaseIndex);
+    return { ...release, releaseIndex, foldKey: key, folded: isFolded(key) };
+  });
   const knownReleases = new Set(releases.map((r) => r.id));
   const stories = allStories(storyMap);
   const hasUnassigned = stories.some(({ story }) => !knownReleases.has(story.release));
