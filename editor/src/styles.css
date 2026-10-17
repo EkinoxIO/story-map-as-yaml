@@ -307,7 +307,11 @@ button.fold {
 [draggable="true"] {
   cursor: grab;
 }
-[data-dragging] {
+
+/* The whole item fades: a dragged story card, or the element marked data-drag-image whose
+   title is dragged (once: not the title too). */
+.story[data-dragging],
+[data-drag-image]:has(> [data-dragging]) {
   opacity: 0.4;
 }
 [data-drop="into"] {

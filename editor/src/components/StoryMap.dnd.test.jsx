@@ -146,6 +146,44 @@ describe("drag and drop", () => {
   });
 });
 
+describe("drag image", () => {
+  // Starts a drag from `source` with a dataTransfer that records setDragImage calls.
+  function startDrag(source) {
+    const calls = [];
+    const transfer = {
+      setData: () => {},
+      effectAllowed: "",
+      setDragImage: (...args) => calls.push(args),
+    };
+    const event = new MouseEvent("dragstart", { bubbles: true, clientX: 30, clientY: 12 });
+    Object.defineProperty(event, "dataTransfer", { value: transfer });
+    fireEvent(source, event);
+    return calls;
+  }
+
+  it("is the whole header or band, not only its title, grabbed where the pointer is", () => {
+    renderMap();
+    for (const container of [activity("Discover"), task("Search"), release("Walking Skeleton")]) {
+      container.getBoundingClientRect = () => ({ left: 10, top: 2, width: 200, height: 40 });
+      const calls = startDrag(container.querySelector("[data-item]"));
+      expect(calls).toEqual([[container, 20, 10]]);
+    }
+  });
+
+  it("is left to the browser for a story card, which is already the whole item", () => {
+    renderMap();
+    expect(startDrag(card("US-1"))).toEqual([]);
+  });
+
+  it("fades the whole header while its title is dragged", () => {
+    renderMap();
+    const header = activity("Discover");
+    startDrag(header.querySelector("[data-item]"));
+    expect(header.querySelector("[data-item]").hasAttribute("data-dragging")).toBe(true);
+    expect(header.matches(":has(> [data-dragging])")).toBe(true);
+  });
+});
+
 describe("keyboard moves", () => {
   it("move a focused story with Alt + arrow keys and keep it focused", () => {
     const map = renderMap();
