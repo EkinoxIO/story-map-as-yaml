@@ -25,6 +25,10 @@ for that reason.
   are kept: only the edited lines and `last_updated` change.
 - **Firefox / Safari:** the browser cannot write local files, so use *Download YAML* to save.
 
+A new story gets the next free id (e.g. `US-405`), which you can change; the id of an
+existing story can be edited too. Story ids must look like `US-123` (the schema's pattern)
+and be unique.
+
 Use the ▾ / ▸ toggles to fold:
 
 - a release: only its title and id stay; its goal and stories are hidden;
