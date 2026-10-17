@@ -13,23 +13,26 @@ sliced horizontally into releases that each have a goal.
 | `sample_story_map.yml` | Example story map (an online bookstore) |
 | `scripts/validate.sh` | Validates story map files: schema, unique ids, known releases |
 | `editor/` | Browser editor (React + Vite), built into a single HTML file |
+| `site/` | GitHub Pages landing page, favicon, share image (`social-card.svg` → `.png`) and Ekinox logo |
 
 ## Editor
 
 Start it either way:
 
-- **Online:** open <https://ekinoxio.github.io/story-map-as-yaml/> (published from `main` by
-  `.github/workflows/pages.yml`, once CI has passed). The sample and the schema can be
-  downloaded there too: `sample_story_map.yml`, `story-map.schema.json`.
+- **Online:** <https://ekinoxio.github.io/story-map-as-yaml/> presents the project
+  (`site/index.html`) and opens the editor at
+  <https://ekinoxio.github.io/story-map-as-yaml/editor/>. The sample and the schema can be
+  downloaded there too. Both are published from `main` by `.github/workflows/pages.yml`,
+  once CI has passed.
 - **From disk:** open `editor/dist/index.html` directly in your browser (no build, no server).
   The built file is committed for that reason.
 
 The editor starts from a story map file on your computer, from the sample, or from a blank
 map; a map started from the sample or blank lives in the page until you save it (*Save as…*
 in Chrome and Edge, *Download YAML* elsewhere). Files are read and saved on your computer,
-never uploaded. The published site is public (GitHub Team plan), but it only holds the
-editor and the public sample and schema, never anyone's story maps. *Close* (top right) goes
-back to the start screen, asking first if changes are not saved.
+never uploaded. The published site is public (GitHub Team plan), but it only holds the landing
+page, the editor and the public sample and schema, never anyone's story maps. *Close* (top right) goes back to the start screen, asking first if changes are not
+saved.
 
 - **Chrome / Edge:** every add, edit and delete is saved straight into the YAML file,
   and the map refreshes when the file changes on disk. Comments, quoting and key order
