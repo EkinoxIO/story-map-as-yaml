@@ -406,6 +406,12 @@ button.fold {
   font-size: 12px;
 }
 .by-ekinox a {
+  color: var(--muted);
+}
+.by-ekinox a:hover {
+  color: var(--ekinox);
+}
+.by-ekinox a.ekinox {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -415,7 +421,7 @@ button.fold {
   font-weight: 600;
   text-decoration: none;
 }
-.by-ekinox a:hover {
+.by-ekinox a.ekinox:hover {
   color: var(--ekinox);
 }
 .by-ekinox img {
