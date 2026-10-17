@@ -1,0 +1,2 @@
+# Built editor, committed so it opens without building: regenerate with `npm run build` in editor/.
+editor/dist/** linguist-generated=true -diff
