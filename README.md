@@ -16,8 +16,16 @@ sliced horizontally into releases that each have a goal.
 
 ## Editor
 
-Open `editor/dist/index.html` directly in your browser (no build, no server) and pick a story map file.
-The built file is committed for that reason.
+Start it either way:
+
+- **Online:** open <https://ekinoxio.github.io/story-map-as-yaml/> (published from `main` by
+  `.github/workflows/pages.yml`). The sample and the schema can be downloaded there too:
+  `sample_story_map.yml`, `story-map.schema.json`.
+- **From disk:** open `editor/dist/index.html` directly in your browser (no build, no server).
+  The built file is committed for that reason.
+
+Either way, you pick a story map file on your computer: it is read and saved there, never
+uploaded. The published page is public (GitHub Team plan), but it only contains the editor.
 
 - **Chrome / Edge:** every add, edit and delete is saved straight into the YAML file,
   and the map refreshes when the file changes on disk. Comments, quoting and key order
