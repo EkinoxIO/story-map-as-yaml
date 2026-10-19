@@ -51,6 +51,8 @@ jobs:
           cp sample_story_map.yml story-map.schema.json _site/
           # Favicon and the image shown in link previews on social networks and chat tools.
           cp site/favicon.svg site/social-card.png site/ekinox-logo.png _site/
+          # The editor screenshot shown on the landing page.
+          cp site/editor-sample.webp _site/
 
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4

@@ -10,7 +10,7 @@
 | `sample_story_map.yml` | Example story map (an online bookstore) |
 | `scripts/validate.sh` | Validates story map files: schema, unique ids, known releases |
 | `editor/` | Browser editor (React + Vite), built into a single HTML file |
-| `site/` | GitHub Pages landing page, favicon, share image (`social-card.svg` → `.png`) and Ekinox logo |
+| `site/` | GitHub Pages landing page, favicon, share image (`social-card.svg` → `.png`), editor screenshot (`editor-sample.webp`) and Ekinox logo |
 | `docs/` | User and developer documentation |
 | `LICENSE`, `NOTICE`, `TRADEMARKS.md` | Apache 2.0 license, copyright notice, and how the Ekinox brand may be used |
 

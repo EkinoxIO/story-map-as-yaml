@@ -91,11 +91,14 @@
     />
     <style>
       /* Ekinox look, as on ekinox.io: near-black page, purple and lavender accents, Poppins
-         headings, grey Open Sans text. Dark in every color scheme, like ekinox.io. */
+         headings, grey Open Sans text. Dark in every color scheme, like ekinox.io.
+         Wide sections laid out in columns and cards, so the page reads at a glance; running
+         text keeps a readable line length inside them. */
       :root {
         color-scheme: dark;
         --bg: #141416;
         --surface: #1b1c1e;
+        --surface-2: #222327;
         --heading: #ffffff;
         --text: #c4c4c9;
         --muted: #8a8a8a;
@@ -103,6 +106,7 @@
         --ekinox: #695acd; /* Ekinox brand purple, from its logo */
         --lavender: #a99ff0; /* links and accents on the dark background */
         --heading-font: Poppins, system-ui, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -112,18 +116,16 @@
         background: var(--bg);
         color: var(--text);
         font:
-          17px/1.7 "Open Sans",
+          16px/1.65 "Open Sans",
           system-ui,
           -apple-system,
           "Segoe UI",
           sans-serif;
       }
-      header,
-      main,
-      footer {
-        max-width: 720px;
+      .wrap {
+        max-width: 1160px;
         margin: 0 auto;
-        padding: 0 20px;
+        padding: 0 24px;
       }
       header {
         display: flex;
@@ -158,52 +160,81 @@
         color: var(--lavender);
       }
       h1,
-      h2 {
+      h2,
+      h3 {
         color: var(--heading);
         font-family: var(--heading-font);
         font-weight: 600;
       }
       h1 {
-        font-size: clamp(34px, 6vw, 52px);
-        line-height: 1.12;
-        margin: 48px 0 20px;
-      }
-      .lead {
-        font-size: 20px;
-        color: var(--muted);
-        margin: 0 0 48px;
+        font-size: clamp(34px, 5.5vw, 56px);
+        line-height: 1.1;
+        margin: 0 0 20px;
+        max-width: 16ch;
       }
       h2 {
-        font-size: 24px;
-        margin: 48px 0 8px;
+        font-size: clamp(24px, 3vw, 32px);
+        line-height: 1.25;
+        margin: 0 0 12px;
       }
       h2::before {
         content: "";
         display: block;
         width: 32px;
         height: 3px;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
         border-radius: 2px;
         background: var(--ekinox);
       }
-      ul {
-        padding-left: 22px;
+      h3 {
+        font-size: 17px;
+        line-height: 1.35;
+        margin: 0 0 6px;
       }
-      li {
-        margin: 6px 0;
+      p {
+        margin: 0 0 12px;
       }
-      li::marker {
+      a {
         color: var(--lavender);
       }
-      .card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 32px 24px;
-        margin: 56px 0;
-        text-align: center;
+      code {
+        font-family: var(--mono);
+        font-size: 0.9em;
+        color: var(--heading);
       }
-      .open {
+      a:focus-visible,
+      button:focus-visible {
+        outline: 3px solid var(--lavender);
+        outline-offset: 3px;
+      }
+      section {
+        padding: 72px 0 0;
+      }
+      .intro {
+        max-width: 62ch;
+        margin-bottom: 32px;
+      }
+      .intro p {
+        color: var(--text);
+      }
+
+      /* Hero */
+      .hero {
+        padding-top: 48px;
+      }
+      .lead {
+        font-size: clamp(18px, 2vw, 21px);
+        color: var(--text);
+        max-width: 46ch;
+        margin: 0 0 28px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px 20px;
+      }
+      .button {
         display: inline-block;
         background: var(--ekinox);
         color: #ffffff;
@@ -212,24 +243,223 @@
         border-radius: 11px;
         text-decoration: none;
       }
-      .open:hover {
+      .button:hover {
         filter: brightness(1.12);
       }
-      .open:focus-visible,
-      a:focus-visible {
-        outline: 3px solid var(--lavender);
-        outline-offset: 3px;
+      .button.secondary {
+        background: transparent;
+        color: var(--heading);
+        border: 1px solid var(--border);
       }
-      .note {
+      .button.secondary:hover {
+        border-color: var(--lavender);
+        filter: none;
+      }
+      .small {
         color: var(--muted);
         font-size: 14px;
+      }
+      .shot {
+        margin: 48px 0 0;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--surface);
+        box-shadow: 0 30px 80px -30px rgba(105, 90, 205, 0.45);
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .shot figcaption {
+        padding: 10px 16px;
+        color: var(--muted);
+        font-size: 14px;
+        border-top: 1px solid var(--border);
+      }
+
+      /* Grids of cards */
+      .grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px 22px 18px;
+      }
+      .card p {
+        margin: 0;
+        font-size: 15px;
+      }
+      .step-number {
+        display: inline-grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        margin-bottom: 12px;
+        border-radius: 50%;
+        background: var(--ekinox);
+        color: #ffffff;
+        font-family: var(--heading-font);
+        font-weight: 600;
+        font-size: 15px;
+      }
+      .who {
+        display: block;
+        color: var(--lavender);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      /* Two columns: text beside code, or two lists side by side */
+      .split {
+        display: grid;
+        gap: 40px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+        align-items: center;
+      }
+      .split.top {
+        align-items: start;
+      }
+      .split.even {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: stretch;
+      }
+      @media (max-width: 860px) {
+        .split,
+        .split.even {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+      }
+      ul.points {
+        list-style: none;
+        padding: 0;
         margin: 16px 0 0;
       }
-      a {
+      ul.points li {
+        position: relative;
+        padding-left: 26px;
+        margin: 10px 0;
+        font-size: 15px;
+      }
+      ul.points li::before {
+        position: absolute;
+        left: 0;
+        top: 0;
+        font-weight: 600;
+      }
+      .yes li::before {
+        content: "✓";
         color: var(--lavender);
       }
-      footer a {
-        font-weight: 600;
+      .no li::before {
+        content: "✕";
+        color: var(--muted);
+      }
+
+      /* Code */
+      .code {
+        position: relative;
+        background: #0e0e10;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .code-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 14px;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+      pre {
+        margin: 0;
+        padding: 16px 18px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 13.5px;
+        line-height: 1.6;
+        color: var(--text);
+      }
+      .k {
+        color: var(--lavender);
+      }
+      .c {
+        color: var(--muted);
+      }
+      .hl {
+        display: inline-block;
+        width: 100%;
+        background: rgba(105, 90, 205, 0.22);
+        box-shadow: -18px 0 0 rgba(105, 90, 205, 0.22);
+      }
+      .copy {
+        background: transparent;
+        color: var(--lavender);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 2px 10px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .copy:hover {
+        border-color: var(--lavender);
+      }
+
+      /* Where it fits: three layers */
+      .layers {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        align-items: stretch;
+      }
+      .layers .arrow {
+        align-self: center;
+        color: var(--lavender);
+        font-size: 22px;
+      }
+      .layers .card.this {
+        border-color: var(--ekinox);
+        background: linear-gradient(180deg, rgba(105, 90, 205, 0.18), var(--surface));
+      }
+      @media (max-width: 860px) {
+        .layers {
+          grid-template-columns: 1fr;
+        }
+        .layers .arrow {
+          justify-self: center;
+          transform: rotate(90deg);
+        }
+      }
+
+      /* Final call to action */
+      .cta {
+        margin: 88px 0 56px;
+        padding: 40px 24px;
+        text-align: center;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+      }
+      .cta h2::before {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .cta .actions {
+        justify-content: center;
+        margin-top: 20px;
       }
       footer {
         color: var(--muted);
@@ -237,10 +467,13 @@
         padding-bottom: 40px;
         text-align: center;
       }
+      footer a {
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
-    <header>
+    <header class="wrap">
       <span class="product">Story Map as YAML</span>
       <a
         class="ekinox"
@@ -253,90 +486,343 @@
       </a>
     </header>
 
-    <main>
-      <h1>Keep the story map next to the code</h1>
-      <p class="lead">
-        A visual story map editor whose source of truth is a plain YAML file:
-        easy for AI agents to read and change, easy for people to see and shape.
-      </p>
-
-      <h2>A second wave, and an old risk</h2>
-      <p>
-        Spec-Driven Development (SDD) is the second wave of AI tooling for
-        building software. It shifts work left: product owners take part and are
-        empowered, and the whole flow from idea to delivery improves, not only
-        the developers' share of it.
-      </p>
-      <p>
-        The risk is to repeat old mistakes: long specification documents that
-        nobody really reads, or understands.
-      </p>
-
-      <h2>The story map</h2>
-      <p>
-        Agile workshops were invented to keep the conversation flowing about the
-        direction to take, the work to do and the steps to get there. The story
-        map is one of them: the user's journey laid out as activities and tasks,
-        sliced into releases that each have a goal.
-      </p>
-
-      <h2>Text for the agents, a picture for the people</h2>
-      <p>
-        Story Map as YAML keeps the story map as a YAML file, so an AI agent can
-        read and update it like any other file in the repository. On top of it,
-        a visual editor keeps people from getting lost in the text: they keep
-        the clarity of the visual map while the text stays the single source of
-        truth.
-      </p>
-      <ul>
-        <li>Open your story map file, start from a sample, or start blank.</li>
-        <li>
-          Edit releases, activities, tasks and stories; fold them; reorder them
-          by drag and drop or from the keyboard.
-        </li>
-        <li>
-          The format is open: download its
-          <a href="story-map.schema.json">JSON Schema</a> and the
-          <a href="sample_story_map.yml">sample story map</a>.
-        </li>
-      </ul>
-
-      <h2>Live with your file</h2>
-      <p>
-        In Chrome and Edge, the editor works on the story map file itself, both
-        ways:
-      </p>
-      <ul>
-        <li>
-          <strong>Changes made elsewhere show up on their own.</strong> When an
-          AI agent, another editor or a <code>git pull</code> changes the file,
-          the map updates within a second, with no reload.
-        </li>
-        <li>
-          <strong>Changes made in the editor are saved straight into the
-          file</strong>, comments and formatting included, ready for the next
-          agent run or commit.
-        </li>
-      </ul>
-      <p>
-        Your files stay on your computer: nothing is uploaded. Firefox and
-        Safari open a copy instead: you download your edits, and open the file
-        again to see changes made elsewhere.
-      </p>
-
-      <div class="card">
-        <a class="open" href="editor/">Open the editor</a>
-        <p class="note">
-          Works in any modern browser; live sync with the file needs Chrome or
-          Edge.
+    <main class="wrap">
+      <section class="hero">
+        <h1>Keep the story map next to the code</h1>
+        <p class="lead">
+          Your AI agents read and update a plain YAML file. Your team sees and
+          shapes it as a story map. Both stay in sync.
         </p>
-        <p class="note">
-          <a href="https://github.com/EkinoxIO/story-map-as-yaml">Source code on GitHub</a>
+        <div class="actions">
+          <a class="button" href="editor/">Open the editor</a>
+          <a class="button secondary" href="sample_story_map.yml" download
+            >Download the sample map</a
+          >
+          <span class="small">Free and open source. Nothing to install.</span>
+        </div>
+        <figure class="shot">
+          <img
+            src="editor-sample.webp"
+            width="2800"
+            height="1640"
+            alt="The editor showing the sample online bookstore map: activities such as Discover Books and Buy Books across the top, their tasks below, and stories sliced into three releases, each with its goal."
+          />
+          <figcaption>
+            The sample map, an online bookstore. To open it, choose
+            <em>Start from the sample</em> in the editor.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <div class="intro">
+          <h2>Agents write specs faster than people can read them</h2>
+          <p>
+            Spec-Driven Development (SDD) brings product owners into the AI
+            workflow: specifications drive the agents, not only the code. It
+            also brings back an old risk.
+          </p>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3>Walls of text</h3>
+            <p>
+              Long specification documents that nobody really reads, or
+              understands.
+            </p>
+          </div>
+          <div class="card">
+            <h3>No overall picture</h3>
+            <p>
+              Each spec is fine on its own, but nobody can see the whole user
+              journey, or what is missing from it.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Priorities drift</h3>
+            <p>
+              What ships first gets decided one prompt at a time, instead of
+              by the team, in the open.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="split">
+        <div>
+          <h2>One file, two views</h2>
+          <p>
+            A story map lays out the user's journey as activities and tasks,
+            and slices it into releases that each have a goal. You see the
+            whole journey on one screen, spot the gaps, and cut an MVP across
+            the whole journey rather than one feature at a time.
+          </p>
+          <p>
+            Here, the map is a YAML file in your repository. Agents read and
+            change it like any other file, and people work on the picture.
+            The text stays the single source of truth.
+          </p>
+          <ul class="points yes">
+            <li>
+              An open format: a
+              <a href="story-map.schema.json">JSON Schema</a> and a
+              <a href="sample_story_map.yml">sample map</a>.
+            </li>
+            <li>
+              Edit, fold and reorder releases, activities, tasks and stories,
+              by drag and drop or from the keyboard.
+            </li>
+          </ul>
+        </div>
+        <div class="code">
+          <div class="code-title">story_map.yml (excerpt)</div>
+          <pre><span class="k">releases:</span>
+  - <span class="k">id:</span> "MVP"
+    <span class="k">title:</span> "Walking Skeleton"
+    <span class="k">goal:</span> "Let a visitor find a book, pay for it
+      by card and receive a confirmation, end to end."
+<span class="k">activities:</span>
+  - <span class="k">id:</span> act_1
+    <span class="k">title:</span> "Discover Books"
+    <span class="k">tasks:</span>
+      - <span class="k">id:</span> task_2
+        <span class="k">title:</span> "Search"
+        <span class="k">stories:</span>
+          - <span class="k">id:</span> US-104
+            <span class="k">title:</span> "Search by title or author"
+            <span class="k">release:</span> "MVP"
+<span class="hl">            <span class="k">status:</span> "In Review"  <span class="c"># set by the agent</span></span></pre>
+        </div>
+      </section>
+
+      <section>
+        <div class="intro">
+          <h2>How it works</h2>
+          <p>
+            People decide the direction. Agents do the work and report on it in
+            the same file. You review every change, as you review code.
+          </p>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <span class="step-number">1</span>
+            <span class="who">Product owner and team</span>
+            <h3>Shape the map</h3>
+            <p>
+              Lay out the journey, slice the releases, write their goals,
+              ideally in a workshop.
+            </p>
+          </div>
+          <div class="card">
+            <span class="step-number">2</span>
+            <span class="who">Agent</span>
+            <h3>Read it, then specify and build</h3>
+            <p>
+              It picks up the next release's stories and writes their specs,
+              then the code.
+            </p>
+          </div>
+          <div class="card">
+            <span class="step-number">3</span>
+            <span class="who">Agent</span>
+            <h3>Report progress in the file</h3>
+            <p>
+              It moves stories to <em>In Progress</em> and
+              <em>In Review</em>. The open map updates on its own.
+            </p>
+          </div>
+          <div class="card">
+            <span class="step-number">4</span>
+            <span class="who">Team</span>
+            <h3>Review the diff</h3>
+            <p>
+              The map changes in the pull request, line by line, like code.
+              Nothing moves without being seen.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="split top">
+        <div>
+          <h2>Tell your agent about the map</h2>
+          <p>
+            Put a few lines in your agent instructions (<code>AGENTS.md</code>,
+            <code>CLAUDE.md</code> or similar) so it knows how to use the map,
+            and what it must leave to people. Adapt the file names and rules
+            to your team.
+          </p>
+        </div>
+        <div class="code">
+          <div class="code-title">
+            AGENTS.md
+            <button class="copy" type="button" data-copy="agents-snippet">
+              Copy
+            </button>
+          </div>
+          <pre id="agents-snippet">## Story map
+
+The product's story map is `story_map.yml`
+(format: story-map.schema.json).
+
+- Read it before planning: releases are in delivery
+  order, and each has a goal.
+- Work on the stories of the first release that
+  is not done. Name each spec after its story id,
+  e.g. `specs/US-104.md`.
+- Set a story to "In Progress" when you start it,
+  and to "In Review" when its pull request is ready.
+  Only people set "Done".
+- Do not add, remove, reorder or move stories
+  between releases: propose such changes instead.
+- Change only the lines you need, and keep the
+  comments.</pre>
+        </div>
+      </section>
+
+      <section>
+        <div class="intro">
+          <h2>Safe for agents and people to edit</h2>
+          <p>
+            In Chrome and Edge, the editor works on the file itself, both ways.
+          </p>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3>Changes elsewhere show up</h3>
+            <p>
+              When an agent, another editor or a <code>git pull</code> changes
+              the file, the map updates within a second, with no reload.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Edits go straight into the file</h3>
+            <p>
+              Comments, quoting and key order are kept: only the edited lines and the
+              timestamp change, so diffs stay small.
+            </p>
+          </div>
+          <div class="card">
+            <h3>No silent overwrite</h3>
+            <p>
+              If the file changed on disk since the editor read it, the save is
+              refused and the map reloads.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Checked, and private</h3>
+            <p>
+              A JSON Schema catches broken files, and the editor flags
+              duplicate ids. Nothing is uploaded.
+            </p>
+          </div>
+        </div>
+        <p class="small" style="margin-top: 16px">
+          Firefox and Safari open a copy instead: download your edits, and
+          open the file again to see changes made elsewhere.
         </p>
-      </div>
+      </section>
+
+      <section>
+        <div class="intro">
+          <h2>Where it fits</h2>
+          <p>
+            The map is the overview, not the spec. It adds a layer above the
+            spec files you already have, whether you write them by hand or with
+            an SDD toolkit, and it doesn't replace them.
+          </p>
+        </div>
+        <div class="layers">
+          <div class="card this">
+            <span class="who">Story map</span>
+            <h3>Why, and in what order</h3>
+            <p>
+              The journey, the releases and their goals, and how far each
+              story has got. One page.
+            </p>
+          </div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="card">
+            <span class="who">Specs</span>
+            <h3>What exactly</h3>
+            <p>
+              Details, acceptance criteria and technical plans, in your own
+              spec files, linked to the map by story id.
+            </p>
+          </div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="card">
+            <span class="who">Code</span>
+            <h3>How</h3>
+            <p>Written and reviewed as usual.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="intro">
+          <h2>Not a silver bullet</h2>
+          <p>
+            A clear, shared map helps, but only if the team talks about it. Here
+            is what to expect, and what not to.
+          </p>
+        </div>
+        <div class="split even">
+          <div class="card">
+            <h3>What it does</h3>
+            <ul class="points yes">
+              <li>Keeps the map where agents and code already are: the repository.</li>
+              <li>Gives people a picture instead of a wall of YAML.</li>
+              <li>Shows each release's progress, as agents report it.</li>
+              <li>Makes every change to the plan visible in a diff.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>What it won't do</h3>
+            <ul class="points no">
+              <li>
+                Replace the workshop: the map comes from a conversation, the
+                file only keeps it.
+              </li>
+              <li>
+                Real-time collaboration: one person edits at a time, and git
+                merges the rest.
+              </li>
+              <li>
+                Hold details: a story has an id, a title, a release and a
+                status. No personas, estimates or acceptance criteria.
+              </li>
+              <li>
+                Replace your tracker: statuses show progress, but sprints and
+                assignments stay where they are. No Jira sync.
+              </li>
+              <li>
+                Judge for you: an agent that edits the map can change your
+                priorities, so review its changes.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta">
+        <h2>Try it on the sample</h2>
+        <p>
+          Open the editor and choose <em>Start from the sample</em>, or open
+          your own story map file.
+        </p>
+        <div class="actions">
+          <a class="button" href="editor/">Open the editor</a>
+          <a
+            class="button secondary"
+            href="https://github.com/EkinoxIO/story-map-as-yaml"
+            >Source code on GitHub</a
+          >
+        </div>
+      </section>
     </main>
 
-    <footer>
+    <footer class="wrap">
       Made by
       <a href="https://ekinox.io" target="_blank" rel="noreferrer">Ekinox</a>
       ·
@@ -344,5 +830,21 @@
       ·
       <a href="https://github.com/EkinoxIO/story-map-as-yaml/blob/main/LICENSE">Apache 2.0 license</a>
     </footer>
+
+    <script>
+      // Copies a code snippet, for the agent instructions to paste.
+      for (const button of document.querySelectorAll("[data-copy]")) {
+        button.addEventListener("click", async () => {
+          const text = document.getElementById(button.dataset.copy).textContent;
+          try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = "Copied";
+          } catch {
+            button.textContent = "Select and copy";
+          }
+          setTimeout(() => (button.textContent = "Copy"), 2000);
+        });
+      }
+    </script>
   </body>
 </html>
